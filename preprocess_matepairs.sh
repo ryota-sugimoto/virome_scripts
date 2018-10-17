@@ -19,7 +19,6 @@ fastq_2=${fastq_2%.gz}
 
 n_reads=$(cat ${fastq_1} | wc -l)
 n_reads=$(( ${n_reads} / 4 ))
-echo '@@@@@@@@' ${n_reads}
 
 dir=$(dirname ${fastq_1})
 nextclip_out_dir=${dir}/nextclip_out
@@ -96,7 +95,7 @@ normalize_command=(${bbmap_dir}/bbnorm.sh
                            out=${normalized_fastq}
                            target=40
                            min=5)
-${normalize_command[@]} || exit 1
+#${normalize_command[@]} || exit 1
 
 #error correction
 corrected_fastq=${normalized_fastq%.fastq.gz}.ecc.fastq.gz
@@ -108,4 +107,4 @@ ecc_command=(${bbmap_dir}/tadpole.sh
                      in=${normalized_fastq}
                      out=${corrected_fastq}
                      mode=correct)
-${ecc_command[@]} || exit 1
+#${ecc_command[@]} || exit 1
