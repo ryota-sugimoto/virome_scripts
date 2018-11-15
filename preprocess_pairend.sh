@@ -3,7 +3,7 @@
 [ -f ${1} ] || { echo "$1 not exist"; exit 1; }
 [ -f ${2} ] || { echo "$2 not exist"; exit 1; }
 
-#TODO you must edit here
+#TODO You must edit here
 bbmap_dir="/home/ryota/workspace/tools/bbmap"
 human_ref="/home/ryota/workspace/tools/bbmap/resources/human_masked"
 tmp_dir="/home/ryota/workspace/tmp"
@@ -100,4 +100,4 @@ merge_command=(${bbmap_dir}/bbmerge.sh
                ihist=${insert_hist})
 ${merge_command[@]} || exit 1
 
-#rm ${trimmed_fastq} ${normalized_fastq} ${corrected_fastq}
+rm ${trimmed_fastq} ${normalized_fastq} ${corrected_fastq}

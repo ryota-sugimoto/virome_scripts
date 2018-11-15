@@ -3,16 +3,17 @@
 [ $# == 2 ] || { echo "Usage: $(basename ${0}) <run_id> <out_dir>"; exit 1; }
 [ -d ${2} ] || { echo "ERROR: ${2} not exist"; exit 1; }
 
-#TODO you must edit here
+#TODO You must edit here
 spades="/home/ryota/workspace/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
 sspace="/home/ryota/workspace/tools/sspace_basic-2.1.1/SSPACE_Basic.pl"
+num_threads=10
+memory_cap=50
 
 script_dir=$(cd $(dirname ${0}); pwd)
 
 run_id=${1}
 out_dir=$(cd ${2}; pwd)
 
-echo ${out_dir}
 mkdir -p ${out_dir}/${run_id}/{fastq,spades,sspace} || exit 1
 fastq_dir=${out_dir}/${run_id}/fastq
 spades_dir=${out_dir}/${run_id}/spades
@@ -28,8 +29,8 @@ ${script_dir}/preprocess_pairend.sh ${fastq_1} ${fastq_2} || exit 1
 
 echo -e "\nAssembling ${run_id}"
 assembly_cmd=(${spades}
-              -t 10
-              -m 50
+              -t ${num_threads}
+              -m ${memory_cap}
               --meta
               --only-assembler
               --12 ${fastq_dir}/${run_id}.unmerged.fastq.gz

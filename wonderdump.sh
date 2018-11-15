@@ -8,6 +8,7 @@
 [ $# == 2 ] || { echo "Usage: $(basename ${0}) <run_id> <out_dir>"; exit 1; }
 [ -d ${2} ] || { echo "ERROR: ${2} not found"; exit 1; }
 
+#TODO You must edit here
 fastq_dump="/home/ryota/workspace/tools/sratoolkit.2.9.2-ubuntu64/bin/fastq-dump"
 
 run_id=${1}
