@@ -156,7 +156,7 @@ do
        in=${putative}
        ref=${dr_fasta}
        outu=${final}
-       k=21
+       k=17
        hdist=1)
   ${cmd[@]} || exit 1
 

@@ -10,8 +10,9 @@ sspace="/home/ryota/workspace/tools/sspace_basic-2.1.1/SSPACE_Basic.pl"
 script_dir=$(cd $(dirname ${0}); pwd)
 
 run_id=${1}
-out_dir=$(cd $(dirname ${2}); pwd)
+out_dir=$(cd ${2}; pwd)
 
+echo ${out_dir}
 mkdir -p ${out_dir}/${run_id}/{fastq,spades,sspace} || exit 1
 fastq_dir=${out_dir}/${run_id}/fastq
 spades_dir=${out_dir}/${run_id}/spades

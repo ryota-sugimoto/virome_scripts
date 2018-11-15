@@ -22,5 +22,8 @@ URL="ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/${PATH1}/$
 wget -nv -o /dev/stdout -O ${TMP_FILE} ${URL} || exit 1
 mv $TMP_FILE $SRA_FILE
 
+pushd ${out_dir} > /dev/null
 ${fastq_dump} --split-3 --gzip ${SRA_FILE} || exit 1
-rm ${SRA_FILE}
+popd > /dev/null
+
+rm ${SRA_FILE} ${out_dir}/${run_id}.fastq.gz

@@ -7,6 +7,8 @@
 bbmap_dir="/home/ryota/workspace/tools/bbmap"
 human_ref="/home/ryota/workspace/tools/bbmap/resources/human_masked"
 tmp_dir="/home/ryota/workspace/tmp"
+num_threads=10
+memory_cap=50
 
 fastq_1=${1}
 fastq_2=${2}
@@ -14,7 +16,7 @@ fastq_2=${2}
 #adapter trim
 trimmed_fastq=${fastq_1%_1.fastq.gz}.trimmed.fastq.gz
 trim_command=(${bbmap_dir}/bbduk.sh
-               t=10
+               t=${num_threads}
                in1=${1}
                in2=${2}
                out=${trimmed_fastq}
@@ -30,7 +32,7 @@ trim_command=(${bbmap_dir}/bbduk.sh
                tpe
                tbo
                maq=20)
-${trim_command[@]} || exit 1
+#${trim_command[@]} || exit 1
 
 #human decontamination
 human_clean_fastq_1=${fastq_1%.fastq.gz}.clean.fastq
@@ -38,7 +40,7 @@ human_clean_fastq_2=${fastq_2%.fastq.gz}.clean.fastq
 #human_unclean_fastq=${trimmed_fastq%.fastq.gz}.human_unclean.fastq.gz
 human_decontamination_command=(${bbmap_dir}/bbmap.sh
                                interleaved=t
-                               t=10
+                               t=${num_threads}
                                path=${human_ref}
                                in=${trimmed_fastq}
                                outu1=${human_clean_fastq_1}
@@ -58,13 +60,13 @@ human_decontamination_command=(${bbmap_dir}/bbmap.sh
                                kfilter=25
                                maxsites=1
                                k=14)
-${human_decontamination_command[@]} || exit 1
+#${human_decontamination_command[@]} || exit 1
 
 #normalize
 normalized_fastq=${fastq_1%_1.fastq.gz}.normalized.fastq.gz
 normalize_command=(${bbmap_dir}/bbnorm.sh
-                           t=10
-                           -Xmx100g
+                           t=${num_threads}
+                           -Xmx${memory_cap}g
                            tmpdir=${tmp_dir}
                            in1=${human_clean_fastq_1}
                            in2=${human_clean_fastq_2}
@@ -76,8 +78,8 @@ ${normalize_command[@]} || exit 1
 #error correction
 corrected_fastq=${fastq_1%_1.fastq.gz}.ecc.fastq.gz
 ecc_command=(${bbmap_dir}/tadpole.sh
-                     threads=10
-                     -Xmx100g
+                     threads=${num_threads}
+                     -Xmx${memory_cap}g
                      tmpdir=${tmp_dir}
                      interleaved=t
                      in=${normalized_fastq}
@@ -90,7 +92,7 @@ merged_fastq=${fastq_1%_1.fastq.gz}.merged.fastq.gz
 unmerged_fastq=${fastq_1%_1.fastq.gz}.unmerged.fastq.gz
 insert_hist=${merged_fastq%.fastq.gz}.hist.txt
 merge_command=(${bbmap_dir}/bbmerge.sh
-               t=10
+               t=${num_threads}
                interleaved=t
                in=${corrected_fastq}
                out=${merged_fastq}
