@@ -18,14 +18,15 @@ mkdir -p ${out_dir}/${run_id}/{fastq,spades,sspace} || exit 1
 fastq_dir=${out_dir}/${run_id}/fastq
 spades_dir=${out_dir}/${run_id}/spades
 sspace_dir=${out_dir}/${run_id}/sspace
+log=${out_dir}/${run_id}/log
 
 echo "Downloading ${run_id}"
-${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} || exit 1
+${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log}  || exit 1
 
 echo -e "\nPreprocessing ${run_id}"
 fastq_1=${fastq_dir}/${run_id}_1.fastq.gz
 fastq_2=${fastq_dir}/${run_id}_2.fastq.gz
-${script_dir}/preprocess_pairend.sh ${fastq_1} ${fastq_2} || exit 1
+${script_dir}/preprocess_pairend.sh ${fastq_1} ${fastq_2} &>> ${log} || exit 1
 
 echo -e "\nAssembling ${run_id}"
 assembly_cmd=(${spades}
@@ -36,7 +37,8 @@ assembly_cmd=(${spades}
               --12 ${fastq_dir}/${run_id}.unmerged.fastq.gz
               --merged ${fastq_dir}/${run_id}.merged.fastq.gz
               -o ${spades_dir})
-${assembly_cmd[@]} || exit 1
+${assembly_cmd[@]} &>> ${log} || exit 1
+rm -r ${spades_dir}/split_input
 
 echo -e "\nScaffolding"
 spades_fasta=${spades_dir}/scaffolds.fasta
@@ -49,6 +51,14 @@ sspace_cmd=(${sspace}
             -x 1
             -T 10
             -l ${libraries}
-            -s ${spade_fasta})
-${sspace_cmd[@]} || exit 1
+            -s ${spades_fasta})
+${sspace_cmd[@]} &>> ${log} || exit 1
 popd > /dev/null
+rm ${sspace_dir}/reads
+
+rm ${fastq_dir}/${run_id}.merged.fastq.gz \
+   ${fastq_dir}/${run_id}.merged.hist.txt \
+   ${fastq_dir}/${run_id}.unmerged.fastq.gz \
+   ${fastq_dir}/${run_id}_{1,2}.fastq.gz
+
+pigz ${fastq_dir}/${run_id}_{1,2}.clean.fastq

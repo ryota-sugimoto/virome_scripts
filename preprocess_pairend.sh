@@ -32,7 +32,7 @@ trim_command=(${bbmap_dir}/bbduk.sh
                tpe
                tbo
                maq=20)
-#${trim_command[@]} || exit 1
+${trim_command[@]} || exit 1
 
 #human decontamination
 human_clean_fastq_1=${fastq_1%.fastq.gz}.clean.fastq
@@ -60,7 +60,7 @@ human_decontamination_command=(${bbmap_dir}/bbmap.sh
                                kfilter=25
                                maxsites=1
                                k=14)
-#${human_decontamination_command[@]} || exit 1
+${human_decontamination_command[@]} || exit 1
 
 #normalize
 normalized_fastq=${fastq_1%_1.fastq.gz}.normalized.fastq.gz
