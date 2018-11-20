@@ -23,12 +23,12 @@ log=${out_dir}/${run_id}/log
 echo "Downloading ${run_id}"
 ${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log}  || exit 1
 
-echo -e "\nPreprocessing ${run_id}"
+echo -e "Preprocessing ${run_id}"
 fastq_1=${fastq_dir}/${run_id}_1.fastq.gz
 fastq_2=${fastq_dir}/${run_id}_2.fastq.gz
 ${script_dir}/preprocess_pairend.sh ${fastq_1} ${fastq_2} &>> ${log} || exit 1
 
-echo -e "\nAssembling ${run_id}"
+echo -e "Assembling ${run_id}"
 assembly_cmd=(${spades}
               -t ${num_threads}
               -m ${memory_cap}
@@ -40,7 +40,7 @@ assembly_cmd=(${spades}
 ${assembly_cmd[@]} &>> ${log} || exit 1
 rm -r ${spades_dir}/split_input
 
-echo -e "\nScaffolding"
+echo -e "Scaffolding ${run_id}"
 spades_fasta=${spades_dir}/scaffolds.fasta
 libraries=${sspace_dir}/libraries.txt
 cat << EOF > ${libraries}
@@ -54,11 +54,13 @@ sspace_cmd=(${sspace}
             -s ${spades_fasta})
 ${sspace_cmd[@]} &>> ${log} || exit 1
 popd > /dev/null
-rm ${sspace_dir}/reads
+rm -r ${sspace_dir}/reads
 
 rm ${fastq_dir}/${run_id}.merged.fastq.gz \
    ${fastq_dir}/${run_id}.merged.hist.txt \
    ${fastq_dir}/${run_id}.unmerged.fastq.gz \
    ${fastq_dir}/${run_id}_{1,2}.fastq.gz
+
+tar -zcf ${spades_dir}.tar.gz ${spades_dir} && rm -r ${spades_dir}
 
 pigz ${fastq_dir}/${run_id}_{1,2}.clean.fastq

@@ -27,4 +27,5 @@ pushd ${out_dir} > /dev/null
 ${fastq_dump} --split-3 --gzip ${SRA_FILE} || exit 1
 popd > /dev/null
 
-rm ${SRA_FILE} ${out_dir}/${run_id}.fastq.gz
+[ -f ${out_dir}/${run_id}.fastq.gz ] && rm ${out_dir}/${run_id}.fastq.gz
+rm ${SRA_FILE}
