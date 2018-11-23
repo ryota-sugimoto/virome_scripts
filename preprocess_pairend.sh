@@ -16,6 +16,7 @@ fastq_2=${2}
 #adapter trim
 trimmed_fastq=${fastq_1%_1.fastq.gz}.trimmed.fastq.gz
 trim_command=(${bbmap_dir}/bbduk.sh
+               -Xmx${memory_cap}g
                t=${num_threads}
                in1=${1}
                in2=${2}
@@ -39,6 +40,7 @@ human_clean_fastq_1=${fastq_1%.fastq.gz}.clean.fastq
 human_clean_fastq_2=${fastq_2%.fastq.gz}.clean.fastq
 #human_unclean_fastq=${trimmed_fastq%.fastq.gz}.human_unclean.fastq.gz
 human_decontamination_command=(${bbmap_dir}/bbmap.sh
+                               -Xmx${memory_cap}g
                                interleaved=t
                                t=${num_threads}
                                path=${human_ref}
@@ -92,6 +94,7 @@ merged_fastq=${fastq_1%_1.fastq.gz}.merged.fastq.gz
 unmerged_fastq=${fastq_1%_1.fastq.gz}.unmerged.fastq.gz
 insert_hist=${merged_fastq%.fastq.gz}.hist.txt
 merge_command=(${bbmap_dir}/bbmerge.sh
+               -Xmx${memory_cap}g
                t=${num_threads}
                interleaved=t
                in=${corrected_fastq}

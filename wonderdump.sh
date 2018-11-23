@@ -17,9 +17,11 @@ out_dir=${2}
 SRA_FILE="${out_dir}/${run_id}.sra"
 TMP_FILE="${out_dir}/${run_id}.tmp"
 
+site=${run_id:0:3}
 PATH1=${run_id:0:6}
 PATH2=${run_id:0:10}
-URL="ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/${PATH1}/${PATH2}/${run_id}.sra"
+
+URL="ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/${site}/${PATH1}/${PATH2}/${run_id}.sra"
 wget -nv -o /dev/stdout -O ${TMP_FILE} ${URL} || exit 1
 mv $TMP_FILE $SRA_FILE
 
