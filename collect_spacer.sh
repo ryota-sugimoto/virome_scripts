@@ -46,7 +46,7 @@ do
   id=$(printf ${dr_id} | sed 's/^>//')
   seq_length=$(echo ${dr_seq} | awk '{print length($1)}')
   [[ ${seq_length} -gt 31 ]] && k=31 || k=${seq_length}
-  filtered_fastq=${out_dir}/${id}.filtered.fastq.gz
+  filtered_fastq=${out_dir}/${id}.spacer.fastq.gz
   cmd2=(${bbmap}/bbduk.sh
         in=${out_dir}/all.fastq.gz
         ref=${dr_tmp_ref}
@@ -55,7 +55,7 @@ do
         hdist=1)
   ${cmd2[@]} || exit 1
 
-  dr_masked_fastq=${out_dir}/${id}.masked.fastq.gz
+  dr_masked_fastq=${out_dir}/${id}.spacer.masked.fastq.gz
   cmd3=(${bbmap}/bbduk.sh
         in=${filtered_fastq}
         ref=${dr_tmp_ref}
@@ -100,7 +100,7 @@ do
 
   
   
-  ${cdhit} -sf 1 -s 0.9 -i ${spacer_fasta} -o ${spacer_fasta%.fasta}.clustered.fasta || exit 1
+  #${cdhit} -sf 1 -s 0.9 -i ${spacer_fasta} -o ${spacer_fasta%.fasta}.clustered.fasta || exit 1
     
   length_median=$(cat ${spacer_fasta} | paste - - | awk '{print length($2)}' \
                     | sort | uniq -c | awk '{print $1"\t"$2}' \
@@ -150,7 +150,7 @@ do
   dr_fasta=${out_dir}/dr.fasta
   grep -A 1 ${dr_name} ${ref} > ${dr_fasta}
 
-  final=${spacers%.fasta}.protospacers.fastq.gz
+  final=${spacers%.spacer.filtered.clustered.fasta}.protospacer.fastq.gz
   cmd=(${bbmap}/bbduk.sh
        interleaved=t
        in=${putative}
@@ -169,8 +169,11 @@ do
                   | tr '\t' '\n' \
                   | sed 's/\=.*$//' \
                   | sort | uniq | wc -l)
-  ratio=$(bc -l <<< "${n_hit_spacers}/${n_all_spacers}")
-  echo -e "protospacer_summary\t${n_all_spacers}\t${n_hit_spacers}\t${ratio}"
+  [ ${n_all_spacers} -eq 0 ] \
+    && ratio=0 \
+    || ratio=$(bc -l <<< "${n_hit_spacers}/${n_all_spacers}")
+  id=$(basename ${final} | cut -f 1 -d '.')
+  echo -e "protospacer_summary\t${id}\t${n_all_spacers}\t${n_hit_spacers}\t${ratio}"
   
   rm ${putative} ${dr_fasta}
 done
