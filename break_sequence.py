@@ -7,7 +7,7 @@ args = parser.parse_args()
 from Bio import SeqIO
 for record in SeqIO.parse(args.fasta, 'fasta'):
   half = int(len(record.seq)/2)
-  print('>' + record.id)
+  print('>' + record.id + '_broke.at_' + str(half))
   print(record.seq[half:])
-  print('>' + record.id)
+  print('>' + record.id + '_broke.at_' + str(half))
   print(record.seq[:half].reverse_complement())
