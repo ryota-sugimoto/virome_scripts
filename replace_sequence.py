@@ -16,7 +16,7 @@ seq_id = set(seq_id)
 
 args.fasta2.seek(0)
 for record in SeqIO.parse(args.fasta1, 'fasta'):
-  if record.id in seq_id and len(reads[record.id])/len(record.seq) > 0.9:
+  if record.id in seq_id and len(reads[record.id])/len(record.seq) > 0.5:
     print('>' + record.id + '_circularity.contig_1_size_' \
           + str(len(reads[record.id])))
     print(reads[record.id])
