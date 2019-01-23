@@ -1,25 +1,31 @@
 #!/usr/bin/env bash
 
-[ $# == 3 ] \
-  || { echo 'collect_spacer.sh <fastq> <crispr_ref> <out_dir>'; exit 1; }
-[ -f ${1} ] || { echo '${1} not found.'; exit 1; }
-[ -f ${2} ] || { echo '${2} not found.'; exit 1; }
-[ -d ${3} ] || { echo '${3} not found.'; exit 1; }
+[ $# == 4 ] \
+  || { echo 'collect_spacer.sh <fastq1> <fastq2> <result_json> <out_dir>'; exit 1; }
+[ -f ${1} ] || { echo "${1} not found."; exit 1; }
+[ -f ${2} ] || { echo "${2} not found."; exit 1; }
+[ -f ${3} ] || { echo "${3} not found."; exit 1; }
+[ -d ${4} ] || { echo "${4} not found."; exit 1; }
 
-fastq=${1}
-ref=${2}
-out_dir=${3}
+fastq1=${1}
+fastq2=${2}
+result_json=${3}
+out_dir=${4}
+
+ref=${out_dir}/crispr_dr_flank.fasta
+$(dirname ${0})/crispr_DR_flank.py ${result_json} > ${ref} || exit 1
 
 bbmap=/home/ryota/workspace/tools/bbmap
 cdhit=/home/ryota/workspace/tools/cd-hit/cd-hit-v4.6.8-2017-1208/cd-hit
 
 dr_ref=${out_dir}/dr.fasta
-cat ${ref} | paste - - | grep DR | tr '\t' '\n' > ${dr_ref}
+cat ${ref} | paste - - | grep CRISPR_DR | tr '\t' '\n' > ${dr_ref} || exit 1
 
 #collect spacers
 echo 'collecting spacers...'
 cmd1=(${bbmap}/bbduk.sh 
-       in=${fastq}
+       in1=${fastq1}
+       in2=${fastq2}
        ref=${dr_ref}
        outm=${out_dir}/all.fastq.gz
        interleaved=t
@@ -93,20 +99,16 @@ do
     | egrep -v '[NF]' \
     | while read seq;
       do
-        echo '>'${id}'_spacer_'${n}
+        echo ">${id}#spacer:${n}#DR_seq:${dr_seq}"
         echo ${seq}
         n=$(( n + 1 ))
       done > ${spacer_fasta}
-
   
-  
-  #${cdhit} -sf 1 -s 0.9 -i ${spacer_fasta} -o ${spacer_fasta%.fasta}.clustered.fasta || exit 1
-    
   length_median=$(cat ${spacer_fasta} | paste - - | awk '{print length($2)}' \
                     | sort | uniq -c | awk '{print $1"\t"$2}' \
                     | sort -n -k 1,1 -r | head -n 1 | cut -f 2)
   
-  echo 'spacer median: ' ${length_median}
+  echo 'spacer median:' ${length_median}
   
   filtered_spacer_fasta=${spacer_fasta%.fasta}.filtered.fasta
   cat ${spacer_fasta} | paste - - \
@@ -118,64 +120,3 @@ do
 done
 
 rm ${out_dir}/all.fastq.gz ${dr_ref}
-
-#collect protospacers
-echo "collecting protospacers..."
-all_spacers=${out_dir}/all_spacers.fasta
-cat ${out_dir}/*.filtered.clustered.fasta > ${all_spacers}
-
-cmd=(${bbmap}/bbduk.sh
-     interleaved=t
-     in=${fastq}
-     outm=${out_dir}/all_protospacers.fastq.gz
-     ref=${all_spacers}
-     k=25
-     hdist=1)
-${cmd[@]} || exit 1
-
-ls ${out_dir}/*.filtered.clustered.fasta | while read spacers;
-do
-  putative=${spacers%.fasta}.p.fastq.gz
-  cmd=(${bbmap}/bbduk.sh
-       interleaved=t
-       in=${out_dir}/all_protospacers.fastq.gz
-       ref=${spacers}
-       outm=${putative}
-       k=27
-       hdist=1
-       rename=t)
-  ${cmd[@]} || exit 1
-
-  dr_name=$(basename ${spacers} | cut -f 1 -d '.')
-  dr_fasta=${out_dir}/dr.fasta
-  grep -A 1 ${dr_name} ${ref} > ${dr_fasta}
-
-  final=${spacers%.spacer.filtered.clustered.fasta}.protospacer.fastq.gz
-  cmd=(${bbmap}/bbduk.sh
-       interleaved=t
-       in=${putative}
-       ref=${dr_fasta}
-       outu=${final}
-       k=17
-       hdist=1)
-  ${cmd[@]} || exit 1
-
-  n_all_spacers=$(grep '>' ${spacers} | wc -l)
-  n_hit_spacers=$(gunzip -c ${final} \
-                  | awk 'n%4==0 {print} {n+=1}' \
-                  | tr ' ' '_' \
-                  | awk 'NF!=1 {print}' \
-                  | cut --complement -f 1 \
-                  | tr '\t' '\n' \
-                  | sed 's/\=.*$//' \
-                  | sort | uniq | wc -l)
-  [ ${n_all_spacers} -eq 0 ] \
-    && ratio=0 \
-    || ratio=$(bc -l <<< "${n_hit_spacers}/${n_all_spacers}")
-  id=$(basename ${final} | cut -f 1 -d '.')
-  echo -e "protospacer_summary\t${id}\t${n_all_spacers}\t${n_hit_spacers}\t${ratio}"
-  
-  rm ${putative} ${dr_fasta}
-done
-
-rm ${all_spacers} ${out_dir}/all_protospacers.fastq.gz

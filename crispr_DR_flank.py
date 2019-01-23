@@ -18,6 +18,7 @@ for sequence in sequences:
     loci = list( (cas['Type'], cas['Start']) for cas in Cas)
     crisprs = sequence['Crisprs']
     for n, crispr in enumerate(crisprs, 1):
+      name = crispr['Name']
       if crispr['Evidence_Level'] >= 3:
          start = crispr['Start']
          if loci:
@@ -26,15 +27,15 @@ for sequence in sequences:
            closest_cas, distance = closest_loci[0], abs(start-closest_loci[1])
          else:
            closest_cas, distance = 'None', 'NA'
-         print('>{}_CRISPR_{}_DR_Cas_{}_distance_{}'.format(id, n, 
+         print('>{}#CRISPR_DR#name:{}#Cas:{}#distance:{}'.format(id, name, 
                                                      closest_cas, distance))
          print(crispr['DR_Consensus'])
          left_flank, right_flank = crispr['Regions'][0], crispr['Regions'][-1]
          assert(left_flank['Type'] == 'LeftFLANK')
          assert(right_flank['Type'] == 'RightFLANK')
-         print('>{}_CRISPR_{}_leftflank_leader_{}'\
+         print('>{}#CRISPR_leftflank#name:{}#leader:{}'\
                .format(id, n, left_flank['Leader']))
          print(left_flank['Sequence'])
-         print('>{}_CRISPR_{}_rightflank_leader_{}'\
+         print('>{}#CRISPR_rightflank#name:{}#leader:{}'\
                .format(id, n, right_flank['Leader']))
          print(right_flank['Sequence'])

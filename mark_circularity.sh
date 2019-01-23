@@ -14,6 +14,7 @@ merged_fasta=${fasta%.fasta}.merged.fasta
 insert=${fasta%.fasta}.insert.txt
 cmd=(${bbmerge}
      t=10
+     minoverlap=25
      in=${broke_fasta}
      interleaved=t
      outm=${merged_fasta}
