@@ -49,7 +49,9 @@ do
   [[ ${right_seq} != 'UNKNOWN' && ${right_length} -ge 31 ]] \
     && { echo ${right_id} ${right_seq} | tr ' ' '\n' >> ${flank_tmp_ref}; }
   
-  id=$(printf ${dr_id} | sed 's/^>//')
+  dr_contig=$(printf ${dr_id} | cut -f 2 -d ',' | cut -f 2 -d ':')
+  crispr_n=$(printf ${dr_id} | cut -f 3 -d ',' | cut -f 2 -d ':')
+  id="${dr_contig}_${crispr_n}"
   seq_length=$(echo ${dr_seq} | awk '{print length($1)}')
   [[ ${seq_length} -gt 31 ]] && k=31 || k=${seq_length}
   filtered_fastq=${out_dir}/${id}.spacer.fastq.gz
@@ -99,7 +101,7 @@ do
     | egrep -v '[NF]' \
     | while read seq;
       do
-        echo ">${id}#spacer:${n}#DR_seq:${dr_seq}"
+        echo ">$( printf ${dr_id} | sed 's/CRISPR_DR/CRISPR_spacer/' ),spacer_n:${n},DR_seq:${dr_seq}"
         echo ${seq}
         n=$(( n + 1 ))
       done > ${spacer_fasta}

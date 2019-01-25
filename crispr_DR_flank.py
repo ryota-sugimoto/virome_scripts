@@ -27,15 +27,15 @@ for sequence in sequences:
            closest_cas, distance = closest_loci[0], abs(start-closest_loci[1])
          else:
            closest_cas, distance = 'None', 'NA'
-         print('>{}#CRISPR_DR#name:{}#Cas:{}#distance:{}'.format(id, name, 
-                                                     closest_cas, distance))
+         print('>CRISPR_DR,contig:{},crispr_n:{},Cas:{},distance:{}'\
+           .format(id, n, closest_cas, distance))
          print(crispr['DR_Consensus'])
          left_flank, right_flank = crispr['Regions'][0], crispr['Regions'][-1]
          assert(left_flank['Type'] == 'LeftFLANK')
          assert(right_flank['Type'] == 'RightFLANK')
-         print('>{}#CRISPR_leftflank#name:{}#leader:{}'\
+         print('>CRISPR_leftflank,contig:{},crispr_n:{},leader:{}'\
                .format(id, n, left_flank['Leader']))
          print(left_flank['Sequence'])
-         print('>{}#CRISPR_rightflank#name:{}#leader:{}'\
+         print('>CRISPR_rightflank,contig:{},crispr_n:{},leader:{}'\
                .format(id, n, right_flank['Leader']))
          print(right_flank['Sequence'])
