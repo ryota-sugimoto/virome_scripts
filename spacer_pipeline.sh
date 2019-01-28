@@ -10,11 +10,11 @@ script_dir=$(cd $(dirname ${0}); pwd)
 sample_dir=$(cd ${1}; pwd)
 sample_name=$(basename ${sample_dir})
 fasta=${sample_dir}/sspace/standard_output.final.scaffolds.fasta
-[ -f ${fasta} ] || { echo "fasta not found."; exit 1; }
+[ -f ${fasta} ] || { echo "${fasta} not found."; exit 1; }
 fastq1=${sample_dir}/fastq/${sample_name}_1.clean.fastq.gz
 fastq2=${sample_dir}/fastq/${sample_name}_2.clean.fastq.gz
-[ -f ${fastq1} ] || { echo "fastq1 not found."; exit 1; }
-[ -f ${fastq2} ] || { echo "fastq2 not found."; exit 1; }
+[ -f ${fastq1} ] || { echo "${fastq1} not found."; exit 1; }
+[ -f ${fastq2} ] || { echo "${fastq2} not found."; exit 1; }
 
 min_len=1000
 processed_fasta=${fasta%.fasta}.filtered.fasta
@@ -43,8 +43,7 @@ cmd=(${crisprfinder}
      -cas
      -i ${processed_fasta}
      -out crisprfinder.out
-     -soFile ${sofile}
-     -cpuM 5)
+     -soFile ${sofile})
 ${cmd[@]} &> log || exit 1
 popd > /dev/null
 result_json=${crispr_dir}/crisprfinder.out/result.json
