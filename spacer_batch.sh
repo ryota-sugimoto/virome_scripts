@@ -9,7 +9,6 @@ sofile=/home/ryota/workspace/tools/CRISPRCasFinder/sel392v2.so
 script_dir=$(cd $(dirname ${0}); pwd)
 sample_dir=$(cd ${1}; pwd)
 sample_name=$(basename ${sample_dir})
-echo ${sample_name}
 fasta=${sample_dir}/sspace/standard_output.final.scaffolds.fasta
 [ -f ${fasta} ] || { echo "fasta not found."; exit 1; }
 fastq1=${sample_dir}/fastq/${sample_name}_1.clean.fastq.gz
@@ -17,7 +16,7 @@ fastq2=${sample_dir}/fastq/${sample_name}_2.clean.fastq.gz
 [ -f ${fastq1} ] || { echo "fastq1 not found."; exit 1; }
 [ -f ${fastq2} ] || { echo "fastq2 not found."; exit 1; }
 
-min_len=10000
+min_len=1000
 processed_fasta=${fasta%.fasta}.filtered.fasta
 cat ${fasta} \
   | awk -v sample=${sample_name} -v min_len=${min_len} \
@@ -44,7 +43,6 @@ cmd=(${crisprfinder}
      -cas
      -i ${processed_fasta}
      -out crisprfinder.out
-     –keep
      -soFile ${sofile}
      -cpuM 5)
 ${cmd[@]} &> log || exit 1
