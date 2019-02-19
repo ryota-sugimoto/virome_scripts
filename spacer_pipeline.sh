@@ -3,8 +3,8 @@
 [ $# == 1 ] || { echo "$(basename ${0}) <sample_dir>"; exit 1; }
 [ -d ${1} ] || { echo "${1} not exist"; exit 1; }
 
-crisprfinder=/home/ryota/workspace/tools/CRISPRCasFinder/CRISPRCasFinder.pl
-sofile=/home/ryota/workspace/tools/CRISPRCasFinder/sel392v2.so
+crisprfinder=/home/r-sugimoto/tools/CRISPRCasFinder/CRISPRCasFinder.pl
+sofile=/home/r-sugimoto/tools/CRISPRCasFinder/sel392v2.so
 
 script_dir=$(cd $(dirname ${0}); pwd)
 sample_dir=$(cd ${1}; pwd)
@@ -34,19 +34,29 @@ cat ${fasta} \
                  print seq; }}' \
   > ${processed_fasta}
 
-crispr_dir=${sample_dir}/crisprfinder
-mkdir ${crispr_dir}
-pushd ${crispr_dir} > /dev/null
-cmd=(${crisprfinder} 
+pushd $(dirname ${crisprfinder}) > /dev/null
+time=$(date +%s)
+mkdir -p work/${sample_name}_${time}
+cd work/${sample_name}_${time}
+crispr_dir=$(pwd)
+cp ${processed_fasta} ./${sample_name}.fasta
+cmd=(../../CRISPRCasFinder.pl 
      -cf CasFinder-2.0.2
      -def General
-#     -cas
-     -i ${processed_fasta}
-     -out crisprfinder.out
-     -soFile ${sofile})
+ #    -cas
+     -i ${sample_name}.fasta
+ #    -keep
+     -out result
+     -so ../../sel392v2.so)
 ${cmd[@]} &> log || exit 1
+rm ${sample_name}.fasta
 popd > /dev/null
-result_json=${crispr_dir}/crisprfinder.out/result.json
+
+mkdir ${sample_dir}/crispr
+cp -r ${crispr_dir}/result/* ${sample_dir}/crispr/
+crispr_dir=${sample_dir}/crispr
+
+result_json=${crispr_dir}/result.json
 [ -f ${result_json} ] || { echo "${result_json} not found"; exit 1; }
 
 spacer_dir=${sample_dir}/spacer
@@ -57,3 +67,23 @@ cmd=(${script_dir}/collect_spacer.sh
      ${result_json}
      ${spacer_dir})
 ${cmd[@]} || exit 1
+
+bed_file=${crispr_dir}/crispr.bed
+cat ${crispr_dir}/TSV/Crisprs_REPORT.tsv \
+  | tail -n +2 \
+  | sed '/^$/d' \
+  | awk 'BEGIN{OFS="\t"} 
+         { if ($6 < 100) {
+             begin = 0; }
+           else {
+             begin = $6 - 100; } 
+           print $2, begin, $7+100}' \
+  > ${bed_file}
+masked_fasta=${processed_fasta%.fasta}.crispr_masked.fasta
+cmd=(bedtools maskfasta
+     -fi ${processed_fasta}
+     -fo ${masked_fasta}
+     -bed ${bed_file})
+${cmd[@]} || exit 1
+
+bwa index ${masked_fasta} || exit 1

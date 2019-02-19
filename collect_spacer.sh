@@ -15,8 +15,8 @@ out_dir=${4}
 ref=${out_dir}/crispr_dr_flank.fasta
 $(dirname ${0})/crispr_DR_flank.py ${result_json} > ${ref} || exit 1
 
-bbmap=/home/ryota/workspace/tools/bbmap
-cdhit=/home/ryota/workspace/tools/cd-hit/cd-hit-v4.6.8-2017-1208/cd-hit
+bbmap=/home/r-sugimoto/tools/bbmap
+cdhit=/home/r-sugimoto/tools/cd-hit-v4.6.8-2017-1208/cd-hit-est
 
 dr_ref=${out_dir}/dr.fasta
 cat ${ref} | paste - - | grep CRISPR_DR | tr '\t' '\n' > ${dr_ref} || exit 1
@@ -101,7 +101,7 @@ do
     | egrep -v '[NF]' \
     | while read seq;
       do
-        echo ">$( printf ${dr_id} | sed 's/CRISPR_DR/CRISPR_spacer/' ),spacer_n:${n},DR_seq:${dr_seq}"
+        echo "$( printf ${dr_id} | sed 's/CRISPR_DR/CRISPR_spacer/' ),spacer_n:${n},DR_seq:${dr_seq}"
         echo ${seq}
         n=$(( n + 1 ))
       done > ${spacer_fasta}
@@ -116,7 +116,7 @@ do
   cat ${spacer_fasta} | paste - - \
     | awk -v m=${length_median} 'length($2) >= 0.8*m && length($2) <= 1.2*m {print}' \
     | tr '\t' '\n' > ${filtered_spacer_fasta}
-  ${cdhit} -sf 1 -i ${filtered_spacer_fasta} -o ${filtered_spacer_fasta%.fasta}.clustered.fasta || exit 1
+  ${cdhit} -d 1000 -sf 1 -i ${filtered_spacer_fasta} -o ${filtered_spacer_fasta%.fasta}.clustered.fasta || exit 1
 
   rm ${dr_tmp_ref} ${flank_tmp_ref}
 done

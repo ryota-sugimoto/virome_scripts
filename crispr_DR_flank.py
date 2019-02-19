@@ -12,7 +12,7 @@ d = json.load(args.result_json)
 sequences = d['Sequences']
 
 for sequence in sequences:
-  if sequence['Length'] > 1000:
+  if int(sequence['Length']) > 1000:
     id = sequence['Id']
     Cas = sequence['Cas']
     loci = list( (cas['Type'], cas['Start']) for cas in Cas)
