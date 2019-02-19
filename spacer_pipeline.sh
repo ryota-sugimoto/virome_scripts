@@ -16,7 +16,7 @@ fastq2=${sample_dir}/fastq/${sample_name}_2.clean.fastq.gz
 [ -f ${fastq1} ] || { echo "${fastq1} not found."; exit 1; }
 [ -f ${fastq2} ] || { echo "${fastq2} not found."; exit 1; }
 
-min_len=1000
+min_len=10000
 processed_fasta=${fasta%.fasta}.filtered.fasta
 cat ${fasta} \
   | awk -v sample=${sample_name} -v min_len=${min_len} \
@@ -40,7 +40,7 @@ pushd ${crispr_dir} > /dev/null
 cmd=(${crisprfinder} 
      -cf CasFinder-2.0.2
      -def General
-     -cas
+#     -cas
      -i ${processed_fasta}
      -out crisprfinder.out
      -soFile ${sofile})
