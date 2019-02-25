@@ -16,7 +16,7 @@ out_dir=${4}
 cmd=(makeblastdb
      -dbtype nucl
      -in ${crispr_masked_contigs})
-#${cmd[@]} || exit 1
+${cmd[@]} || exit 1
 
 blast_out=${out_dir}/protospacer.blastout
 cmd=(blastn
@@ -24,15 +24,15 @@ cmd=(blastn
      -db ${crispr_masked_contigs}
      -outfmt 6
      -num_threads 10)
-#${cmd[@]} > ${blast_out} 2> /dev/null || exit 1
+${cmd[@]} > ${blast_out} 2> /dev/null || exit 1
 
-protospacer_contigs=${out_dir}/protospacer_contigs_
+protospacer_contigs=${out_dir}/protospacer_contigs
 awk '$5 <= 1 && $6 <= 1 {print $2}' ${blast_out} \
   | sort \
   | uniq -c \
   | awk '$1 > 2 {print $2}' > ${protospacer_contigs} || exit 1
 
-protospacer_contigs_fasta=${out_dir}/protospacer_.fasta
+protospacer_contigs_fasta=${out_dir}/protospacer.fasta
 cmd=(samtools faidx
      ${contigs}
      $(cat ${protospacer_contigs} | tr '\n' '\t'))
