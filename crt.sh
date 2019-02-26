@@ -5,11 +5,14 @@
 
 fasta=${1}
 
-crt_jar="~/workspace/tools/crt/CRT1.2-CLI.jar"
+#TODO you must edit here
+crt_jar=~/workspace/tools/crt/CRT1.2-CLI.jar
 
-output=${fasta%.fasta}.crtout
-[ -f ${output} ] && rm ${output}
-touch ${output}
+script_dir=$(cd $(dirname ${0}); pwd)
+
+crt_out=${fasta%.fasta}.crtout
+[ -f ${crt_out} ] && rm ${crt_out}
+touch ${crt_out}
 
 tmp_crt=$(dirname ${fasta})/tmp.crtout
 
@@ -26,8 +29,12 @@ cat ${fasta} \
   do
     tmp_fasta=$(dirname ${fasta})/$(echo ${id} | tr -d '>').fasta
     echo -e "${id}\n${seq}" > ${tmp_fasta}
-    java -cp ~/workspace/tools/crt/CRT1.2-CLI.jar crt ${tmp_fasta} ${tmp_crt}
-    echo >> ${output}
-    cat ${tmp_crt} | egrep -v '^$' >> ${output}
+    cmd=(java -cp ${crt_jar} crt ${tmp_fasta} ${tmp_crt})
+    ${cmd[@]} || exit 1
+    echo >> ${crt_out}
+    cat ${tmp_crt} | egrep -v '^$' >> ${crt_out}
     rm ${tmp_crt} ${tmp_fasta}
   done
+
+dr_fasta=${fasta%.fasta}.crispr_dr.fasta
+${script_dir}/parse_crt.py ${crt_out} > ${dr_fasta}
