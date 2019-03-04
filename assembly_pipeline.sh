@@ -5,7 +5,6 @@
 
 #TODO You must edit here
 spades="/home/ryota/workspace/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
-sspace="/home/ryota/workspace/tools/sspace_basic-2.1.1/SSPACE_Basic.pl"
 num_threads=10
 memory_cap=50
 
@@ -14,14 +13,16 @@ script_dir=$(cd $(dirname ${0}); pwd)
 run_id=${1}
 out_dir=$(cd ${2}; pwd)
 
-mkdir -p ${out_dir}/${run_id}/{fastq,spades,sspace} || exit 1
+mkdir -p ${out_dir}/${run_id}/{fastq,contig,spacer} || exit 1
 fastq_dir=${out_dir}/${run_id}/fastq
-spades_dir=${out_dir}/${run_id}/spades
-sspace_dir=${out_dir}/${run_id}/sspace
+contig_dir=${out_dir}/${run_id}/contig
+spacer_dir=${out_dir}/${run_id}/spacer
 log=${out_dir}/${run_id}/log
 
+[ -f ${log} ] && rm ${log}
+
 echo "Downloading ${run_id}"
-${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log}  || exit 1
+${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log} || exit 1
 
 echo -e "Preprocessing ${run_id}"
 fastq_1=${fastq_dir}/${run_id}_1.fastq.gz
@@ -34,33 +35,38 @@ assembly_cmd=(${spades}
               -m ${memory_cap}
               --meta
               --only-assembler
-              --12 ${fastq_dir}/${run_id}.unmerged.fastq.gz
-              --merged ${fastq_dir}/${run_id}.merged.fastq.gz
-              -o ${spades_dir})
+              --12 ${fastq_dir}/${run_id}.ecc.fastq.gz
+              -o ${contig_dir})
 ${assembly_cmd[@]} &>> ${log} || exit 1
-rm -r ${spades_dir}/split_input
+rm -r ${contig_dir}/split_input
 
-echo -e "Scaffolding ${run_id}"
-spades_fasta=${spades_dir}/scaffolds.fasta
-libraries=${sspace_dir}/libraries.txt
-cat << EOF > ${libraries}
-PE ${fastq_dir}/${run_id}_1.clean.fastq ${fastq_dir}/${run_id}_2.clean.fastq 500 0.25 FR
-EOF
-pushd ${sspace_dir} > /dev/null
-sspace_cmd=(${sspace}
-            -x 1
-            -T 10
-            -l ${libraries}
-            -s ${spades_fasta})
-${sspace_cmd[@]} &>> ${log} || exit 1
-popd > /dev/null
-rm -r ${sspace_dir}/reads
-
-rm ${fastq_dir}/${run_id}.merged.fastq.gz \
-   ${fastq_dir}/${run_id}.merged.hist.txt \
-   ${fastq_dir}/${run_id}.unmerged.fastq.gz \
+rm ${fastq_dir}/${run_id}.ecc.fastq.gz \
    ${fastq_dir}/${run_id}_{1,2}.fastq.gz
 
-tar -zcf ${spades_dir}.tar.gz ${spades_dir} && rm -r ${spades_dir}
 
-pigz ${fastq_dir}/${run_id}_{1,2}.clean.fastq
+echo -e "Extracting spacers ${run_id}"
+fasta=${contig_dir}/scaffolds.fasta
+min_len=1000
+processed_fasta=${spacer_dir}/${run_id}.fasta
+cat ${fasta} \
+  | awk -v run_id=${run_id} -v min_len=${min_len} \
+        'BEGIN { n = 0; }
+         /^>/ { l = length(seq);
+                if (n!=0 && l >= min_len) {
+                  print ">CONTIG,run_id:"run_id",contig_n:"n",length:"l;
+                  print seq; }
+                n += 1;
+                seq = ""; }
+         /^[^>]/ { seq = seq""$0; }
+         END { l = length(seq);
+               if (length(seq) > min_len) {
+                 print ">CONTIG,run_id:"run_id",contig_n:"n",length:"l;
+                 print seq; }}' \
+  > ${processed_fasta}
+
+${script_dir}/crt.sh ${processed_fasta} &>> ${log} || exit 1
+
+${script_dir}/collect_spacer.sh \
+  ${fastq_dir}/${run_id}.clean.fastq.gz \
+  ${processed_fasta%.fasta}.crispr_dr.fasta \
+  ${spacer_dir} &>> ${log} || exit 1

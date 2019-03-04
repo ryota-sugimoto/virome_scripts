@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 #
-#This code is based on "Wonderdump" 
-#from http://data.biostarhandbook.com/scripts/wonderdump.sh
+# This code is based on "Wonderdump" 
+# from http://data.biostarhandbook.com/scripts/wonderdump.sh
 #
 
 [ $# == 2 ] || { echo "Usage: $(basename ${0}) <run_id> <out_dir>"; exit 1; }

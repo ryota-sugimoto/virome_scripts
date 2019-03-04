@@ -23,14 +23,14 @@ cat ${fasta} \
         'BEGIN { n = 0; }   
          /^>/ { l = length(seq);
                 if (n!=0 && l >= min_len) { 
-                  print ">"sample"_"n;
+                  print ">"sample"_"n"_"l;
                   print seq; }
                 n += 1;
                 seq = ""; } 
          /^[^>]/ { seq = seq""$0; }
          END { l = length(seq);
                if (length(seq) > min_len) {
-                 print ">"sample"_"n;
+                 print ">"sample"_"n"_"l;
                  print seq; }}' \
   > ${processed_fasta}
 

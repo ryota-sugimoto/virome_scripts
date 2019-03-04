@@ -15,6 +15,7 @@ crt_out=${fasta%.fasta}.crtout
 touch ${crt_out}
 
 tmp_crt=$(dirname ${fasta})/tmp.crtout
+tmp_fasta=$(dirname ${fasta})/tmp.fasta
 
 cat ${fasta} \
   | awk 'BEGIN{ id="";
@@ -27,9 +28,8 @@ cat ${fasta} \
   | tail -n +3 | paste - - \
   | while read id seq;
   do
-    tmp_fasta=$(dirname ${fasta})/$(echo ${id} | tr -d '>').fasta
     echo -e "${id}\n${seq}" > ${tmp_fasta}
-    cmd=(java -cp ${crt_jar} crt ${tmp_fasta} ${tmp_crt})
+    cmd=(java -cp ${crt_jar} crt -maxRL 70 -maxSL 70 ${tmp_fasta} ${tmp_crt})
     ${cmd[@]} || exit 1
     echo >> ${crt_out}
     cat ${tmp_crt} | egrep -v '^$' >> ${crt_out}

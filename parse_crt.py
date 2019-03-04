@@ -19,6 +19,11 @@ for s in args.crt_out:
     continue
   if l[0] == 'ORGANISM:':
     contig = l[1]
+    id_l = contig.split(',')[1:]
+    contig_d = {}
+    for kv in id_l:
+      k,v = kv.split(':')
+      contig_d[k] = v
   elif l[0] == 'CRISPR':
     n_crispr = l[1]
     crispr_range = (l[3],l[5])
@@ -28,7 +33,8 @@ for s in args.crt_out:
       f = True
     elif f:
       consensus_dr = consensus(DRs)
-      print(">CRISPR_consensus_DR,contig:{},position:{}-{}".format(*(contig,)+crispr_range))
+      print(">CRISPR_consensus_DR,run_id:{},contig_n:{},position:{}-{}"\
+            .format(*(contig_d['run_id'], contig_d['contig_n'])+crispr_range))
       print(consensus_dr)
       f = False
   elif f:
