@@ -34,7 +34,7 @@ cat ${fasta} \
     echo >> ${crt_out}
     cat ${tmp_crt} | egrep -v '^$' >> ${crt_out}
     rm ${tmp_crt} ${tmp_fasta}
-  done
+  done || exit 1
 
 dr_fasta=${fasta%.fasta}.crispr_dr.fasta
-${script_dir}/parse_crt.py ${crt_out} > ${dr_fasta}
+${script_dir}/parse_crt.py ${crt_out} > ${dr_fasta} || exit 1

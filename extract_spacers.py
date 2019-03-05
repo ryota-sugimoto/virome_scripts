@@ -10,6 +10,7 @@ args = parser.parse_args()
 from Bio import SeqIO
 import re
 from collections import Counter
+
 re_obj = re.compile('R[^R]+R')
 
 seqs = []
@@ -19,7 +20,8 @@ for record in SeqIO.parse(args.DR_masked_fastq, 'fastq'):
 seqs = list(map(lambda s: s[1:-1], seqs))
 mode_length = Counter(len(s) for s in seqs).most_common(1)[0][0]
 seqs = filter(lambda s:
-                 len(s) > 0.8*mode_length and len(s) < 1.2*mode_length,
+                len(s) > 0.8*mode_length and len(s) < 1.2*mode_length \
+                and 'N' not in s,
               seqs)
 
 for i, seq in enumerate(seqs,1):

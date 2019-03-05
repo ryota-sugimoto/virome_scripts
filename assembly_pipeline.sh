@@ -62,7 +62,7 @@ cat ${fasta} \
                if (length(seq) > min_len) {
                  print ">CONTIG,run_id:"run_id",contig_n:"n",length:"l;
                  print seq; }}' \
-  > ${processed_fasta}
+  > ${processed_fasta} || exit 1
 
 ${script_dir}/crt.sh ${processed_fasta} &>> ${log} || exit 1
 
@@ -70,3 +70,6 @@ ${script_dir}/collect_spacer.sh \
   ${fastq_dir}/${run_id}.clean.fastq.gz \
   ${processed_fasta%.fasta}.crispr_dr.fasta \
   ${spacer_dir} &>> ${log} || exit 1
+
+rm -r ${fastq_dir} ${contig_dir}
+echo -e "Completed ${run_id}"
