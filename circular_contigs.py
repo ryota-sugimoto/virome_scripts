@@ -15,6 +15,7 @@ args = parser.parse_args()
 for record in SeqIO.parse(args.fasta, 'fasta'):
   seed_begin = 0
   seed_end = args.seed_length
+  f = False
   for i in range(args.num_slide):
     seed = record.seq[seed_begin:seed_end]
     pos = record.seq.rfind(seed, seed_end)
@@ -25,13 +26,16 @@ for record in SeqIO.parse(args.fasta, 'fasta'):
       score = pairwise2.align.globalms(seq1, seq2, 1, -1, -1, -0.5,
                                        score_only=True)
       if score >= len(seq1)*0.9:
+        f = True
         seq = record.seq[:pos-i*args.slide_size]
-        print('>'+record.id+'_ori_{}_nonredun_{}'.format(
-              len(record.seq), len(seq)))
+        print('>'+record.id+'_nonredun_{}'.format(len(seq)))
         print(seq)
         break
       else:
         break
+  if not f:
+    print('>'+record.id)
+    print(record.seq)
     
     seed_begin += args.slide_size
     seed_end += args.slide_size

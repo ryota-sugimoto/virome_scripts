@@ -61,14 +61,16 @@ human_decontamination_command=(${bbmap_dir}/bbmap.sh
 ${human_decontamination_command[@]} || exit 1
 
 #error correction
-corrected_fastq=${fastq_1%_1.fastq.gz}.ecc.fastq.gz
+corrected_fastq_1=${fastq_1%.fastq.gz}.ecc.fastq
+corrected_fastq_2=${fastq_2%.fastq.gz}.ecc.fastq
 ecc_command=(${bbmap_dir}/tadpole.sh
                      threads=${num_threads}
                      -Xmx${memory_cap}g
                      tmpdir=${tmp_dir}
                      interleaved=t
                      in=${human_clean_fastq}
-                     out=${corrected_fastq}
+                     out1=${corrected_fastq_1}
+                     out2=${corrected_fastq_2}
                      mode=correct)
 ${ecc_command[@]} || exit 1
 

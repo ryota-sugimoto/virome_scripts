@@ -20,6 +20,7 @@ cdhit=/home/ryota/workspace/tools/cd-hit/cd-hit-v4.6.8-2017-1208/cd-hit-est
 clustered_dr=${out_dir}/$(basename ${crispr_dr_fasta%.fasta}.clustered.fasta)
 clustered_dr_cmd=(${cdhit}
                 -T 5
+                -M 50000
                 -s 0.9
                 -c 1
                 -d 1000
@@ -76,7 +77,7 @@ do
     --DR_seq ${dr_seq} \
     ${dr_masked_fastq} > ${spacer_fasta} || exit 1
   
-  ${cdhit} -T 5 -d 1000 -sf 1 \
+  ${cdhit} -M 50000 -d 1000 -sf 1 -s 0.9 \
     -i ${spacer_fasta} \
     -o ${spacer_fasta%.fasta}.clustered.fasta || exit 1
 
@@ -90,7 +91,7 @@ all_spacers_fasta=${out_dir}/${run_id}.all_spacers.fasta
 cat ${out_dir}/*.spacer.clustered.fasta > ${all_spacers_fasta}
 rm ${out_dir}/tmp_*
 
-${cdhit} -T 5 -d 1000 -sf 1 -s 0.9 \
+${cdhit} -T 5 -M 50000 -d 1000 -sf 1 -s 0.9 \
   -i ${all_spacers_fasta} \
   -o ${all_spacers_fasta%.fasta}.clustered.fasta || exit 1
 

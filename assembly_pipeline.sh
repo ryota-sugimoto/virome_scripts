@@ -35,12 +35,14 @@ assembly_cmd=(${spades}
               -m ${memory_cap}
               --meta
               --only-assembler
-              --12 ${fastq_dir}/${run_id}.ecc.fastq.gz
+              -1 ${fastq_dir}/${run_id}_1.ecc.fastq
+              -2 ${fastq_dir}/${run_id}_2.ecc.fastq
               -o ${contig_dir})
 ${assembly_cmd[@]} &>> ${log} || exit 1
-rm -r ${contig_dir}/split_input
+#rm -r ${contig_dir}/split_input
 
-rm ${fastq_dir}/${run_id}.ecc.fastq.gz \
+rm ${fastq_dir}/${run_id}_1.ecc.fastq \
+   ${fastq_dir}/${run_id}_2.ecc.fastq \
    ${fastq_dir}/${run_id}_{1,2}.fastq.gz
 
 
@@ -72,4 +74,5 @@ ${script_dir}/collect_spacer.sh \
   ${spacer_dir} &>> ${log} || exit 1
 
 rm -r ${fastq_dir} ${contig_dir}
+gzip ${log}
 echo -e "Completed ${run_id}"
