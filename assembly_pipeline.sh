@@ -5,6 +5,8 @@
 
 #TODO You must edit here
 spades="/home/ryota/workspace/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
+sambamba="/home/ryota/workspace/tools/sambamba-0.6.8-linux-static"
+tmp="/home/ryota/workspace/tmp"
 num_threads=10
 memory_cap=50
 
@@ -13,10 +15,10 @@ script_dir=$(cd $(dirname ${0}); pwd)
 run_id=${1}
 out_dir=$(cd ${2}; pwd)
 
-mkdir -p ${out_dir}/${run_id}/{fastq,contig,spacer} || exit 1
+mkdir -p ${out_dir}/${run_id}/{fastq,contig,result} || exit 1
 fastq_dir=${out_dir}/${run_id}/fastq
 contig_dir=${out_dir}/${run_id}/contig
-spacer_dir=${out_dir}/${run_id}/spacer
+spacer_dir=${out_dir}/${run_id}/result
 log=${out_dir}/${run_id}/log
 
 [ -f ${log} ] && rm ${log}
@@ -72,6 +74,45 @@ ${script_dir}/collect_spacer.sh \
   ${fastq_dir}/${run_id}.clean.fastq.gz \
   ${processed_fasta%.fasta}.crispr_dr.fasta \
   ${spacer_dir} &>> ${log} || exit 1
+
+echo -e "Detecting circularity ${run_id}"
+circular_fasta=${processed_fasta%.fasta}.circular.fasta
+${script_dir}/circular_contigs.py \
+  ${processed_fasta} \
+  > ${circular_fasta} \
+  2>> ${log} || exit 1
+
+bwa index ${circular_fasta} || exit 1
+
+sam=${spacer_dir}/${run_id}.sam
+alignment=(bwa mem
+           -t ${num_threads}
+           -p
+           ${circular_fasta}
+           ${fastq_dir}/${run_id}.clean.fastq.gz)
+${alignment[@]} > ${sam} 2>> ${log} || exit 1
+
+bam=${sam%.sam}.bam
+convert_bam=(${sambamba} view 
+             -t ${num_threads}
+             -f bam
+             -S
+             -o ${bam}
+             ${sam})
+${convert_bam[@]} &>> ${log} || exit 1
+
+sort_bam=(${sambamba} sort
+          -t ${num_threads}
+          --tmpdir=${tmp}
+          ${bam})
+${sort_bam[@]} &>> ${log} || exit 1
+
+sorted_bam=${bam%.bam}.sorted.bam
+${script_dir}/alignment_based_circularity.py \
+  ${sorted_bam} \
+  > ${spacer_dir}/${run_id}.pairend_circular || exit 1
+
+rm ${sam} ${bam} ${sorted_bam} ${sorted_bam}.bai
 
 rm -r ${fastq_dir} ${contig_dir}
 gzip ${log}

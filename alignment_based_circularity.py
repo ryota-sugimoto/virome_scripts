@@ -12,7 +12,7 @@ args = parser.parse_args()
 
 import pysam
 import numpy as np
-bam_file = pysam.AlignmentFile(args.bam, threads=4, require_index=True)
+bam_file = pysam.AlignmentFile(args.bam, threads=1, require_index=True)
 
 tl = []
 ql = []
@@ -67,6 +67,7 @@ for ref,length in zip(bam_file.references, bam_file.lengths):
        and read.is_reverse and not read.mate_is_reverse:
       reverse_circular_evidence.append(read)
 
+    '''
     elif read.has_tag('SA') \
          and not read.is_secondary \
          and read.reference_start <= ql_mean: 
@@ -86,7 +87,7 @@ for ref,length in zip(bam_file.references, bam_file.lengths):
       begin_nexts.append((read.next_reference_name, 
                           read.next_reference_start,
                           read))
-
+    '''
   end_nexts = []
   forward_circular_evidence = []
   for read in end_reads:
@@ -96,7 +97,7 @@ for ref,length in zip(bam_file.references, bam_file.lengths):
        and read.next_reference_start <= edge_length \
        and not read.is_reverse and read.mate_is_reverse:
       forward_circular_evidence.append(read)
-
+    '''
     elif read.has_tag('SA') \
          and not read.is_secondary \
          and read.reference_start >= length-ql_mean: 
@@ -116,15 +117,14 @@ for ref,length in zip(bam_file.references, bam_file.lengths):
       end_nexts.append((read.next_reference_name,
                         read.next_reference_start,
                         read))
-
-  if forward_circular_evidence or reverse_circular_evidence \
-     or chimeric_circular_evidence:
+    '''
+  if forward_circular_evidence or reverse_circular_evidence:
     cov = bam_file.count_coverage(ref)
     dop = np.sum(cov[0]+cov[1]+cov[2]+cov[3])/length
     print('\t'.join([ref, str(dop),
                      str(len(forward_circular_evidence)),
-                     str(len(reverse_circular_evidence)),
-                     str(len(chimeric_circular_evidence))]))
+                     str(len(reverse_circular_evidence))]))
+                 #    str(len(chimeric_circular_evidence))]))
                    
   sys.stdout.flush()
   if args.out_sam:
