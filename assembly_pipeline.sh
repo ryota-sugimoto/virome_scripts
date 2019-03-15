@@ -41,7 +41,6 @@ assembly_cmd=(${spades}
               -2 ${fastq_dir}/${run_id}_2.ecc.fastq
               -o ${contig_dir})
 ${assembly_cmd[@]} &>> ${log} || exit 1
-#rm -r ${contig_dir}/split_input
 
 rm ${fastq_dir}/${run_id}_1.ecc.fastq \
    ${fastq_dir}/${run_id}_2.ecc.fastq \
@@ -82,7 +81,7 @@ ${script_dir}/circular_contigs.py \
   > ${circular_fasta} \
   2>> ${log} || exit 1
 
-bwa index ${circular_fasta} || exit 1
+bwa index ${circular_fasta} &>> ${log} || exit 1
 
 sam=${spacer_dir}/${run_id}.sam
 alignment=(bwa mem
@@ -112,7 +111,7 @@ ${script_dir}/alignment_based_circularity.py \
   ${sorted_bam} \
   > ${spacer_dir}/${run_id}.pairend_circular || exit 1
 
-rm ${sam} ${bam} ${sorted_bam} ${sorted_bam}.bai
+rm ${sam} ${bam}
 
 rm -r ${fastq_dir} ${contig_dir}
 gzip ${log}
