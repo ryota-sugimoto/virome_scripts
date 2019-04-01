@@ -11,6 +11,9 @@ from Bio import pairwise2
 from Bio.Seq import Seq
 
 record_dict = SeqIO.index(args.fasta.name, "fasta")
+score_function = lambda s1,s2: pairwise2.align.globalms(s1, s2,
+                                                        1, -1, -1, -0.5,
+                                                        score_only=True)
 for s in args.blastout:
   l = s.split()
   query, subject, pidentical, length, mismath, gapopen, qstart, qend, \
@@ -25,9 +28,10 @@ for s in args.blastout:
   repeat_length = len(direct_repeat)
   fivedash_adjacent = record_dict[subject][sstart-repeat_length: sstart].seq
   threedash_adjacent = record_dict[subject][send: send+repeat_length].seq
-  score_function = lambda s1,s2: pairwise2.align.globalms(s1, s2,
-                                                          1, -1, -1, -0.5,
-                                                          score_only=True)
+  if len(fivedash_adjacent) == 0:
+    continue
+  elif len(threedash_adjacent) == 0:
+    continue
   fivedash_adj_dr_score = score_function(fivedash_adjacent,
                                          direct_repeat)
   fivedash_adj_dr_rc_score = score_function(fivedash_adjacent,
