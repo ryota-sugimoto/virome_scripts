@@ -24,12 +24,12 @@ log=${out_dir}/${run_id}/log
 [ -f ${log} ] && rm ${log}
 
 echo "Downloading ${run_id}"
-#${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log} || exit 1
-pushd ${fastq_dir} > /dev/null
-/home/ryota/workspace/tools/sratoolkit.2.9.2-ubuntu64/bin/fastq-dump \
-  --split-3 --gzip \
-  ${run_id} &> ${log} || exit 1
-popd > /dev/null
+${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log} || exit 1
+#pushd ${fastq_dir} > /dev/null
+#/home/ryota/workspace/tools/sratoolkit.2.9.2-ubuntu64/bin/fastq-dump \
+#  --split-3 --gzip \
+#  ${run_id} &> ${log} || exit 1
+#popd > /dev/null
 
 echo -e "Preprocessing ${run_id}"
 fastq_1=${fastq_dir}/${run_id}_1.fastq.gz
