@@ -25,7 +25,6 @@ ${hhblits[@]} || exit 1
 hhr=${fasta%.fasta}.hhr
 hhsearch=(${hhdir}/hhsearch -cpu 15
                             -d ${pdb}
-                            -p 80
                             -i ${a3m}
                             -o ${hhr})
 ${hhsearch[@]} || exit 1
