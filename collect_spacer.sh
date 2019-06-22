@@ -13,8 +13,8 @@ out_dir=${3}
 script_dir=$(cd $(dirname ${0}); pwd)
 
 #TODO You must edit here
-bbmap=/home/ryota/workspace/tools/bbmap
-cdhit=/home/ryota/workspace/tools/cd-hit/cd-hit-v4.6.8-2017-1208/cd-hit-est
+bbmap="/home/r-sugimoto/tools/bbmap"
+cdhit="/home/r-sugimoto/tools/cd-hit-v4.6.8-2017-1208/cd-hit-est"
 #Please make sure that this is cd-hit-est, not cd-hit
 
 clustered_dr=${out_dir}/$(basename ${crispr_dr_fasta%.fasta}.clustered.fasta)

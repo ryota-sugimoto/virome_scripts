@@ -6,7 +6,7 @@
 fasta=${1}
 
 #TODO you must edit here
-crt_jar=~/workspace/tools/crt/CRT1.2-CLI.jar
+crt_jar="/home/r-sugimoto/tools/crt/CRT1.2-CLI.jar"
 
 script_dir=$(cd $(dirname ${0}); pwd)
 

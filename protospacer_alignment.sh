@@ -2,7 +2,7 @@
 
 [ $# == 2 ] || { echo "$(basename $0) <blastout> <out_dir>"; exit 1; }
 [ -f ${1} ] || { echo "${1} not found."; exit 1; }
-[ -d ${2} ] || { echo "${2} not found."; eixt 1; }
+[ -d ${2} ] || { echo "${2} not found."; exit 1; }
 
 blastout=${1}
 out_dir=${2}

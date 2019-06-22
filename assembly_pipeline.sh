@@ -4,11 +4,12 @@
 [ -d ${2} ] || { echo "ERROR: ${2} not exist"; exit 1; }
 
 #TODO You must edit here
-spades="/home/ryota/workspace/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
-sambamba="/home/ryota/workspace/tools/sambamba-0.6.8-linux-static"
-tmp="/home/ryota/workspace/tmp"
+spades="/home/r-sugimoto/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
+sambamba="/home/r-sugimoto/tools/sambamba-0.6.9-linux-static"
+fastq_dump="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/fastq-dump"
+tmp="/home/r-sugimoto/tmp"
 num_threads=10
-memory_cap=50
+memory_cap=200
 
 script_dir=$(cd $(dirname ${0}); pwd)
 
@@ -24,12 +25,12 @@ log=${out_dir}/${run_id}/log
 [ -f ${log} ] && rm ${log}
 
 echo "Downloading ${run_id}"
-${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log} || exit 1
-#pushd ${fastq_dir} > /dev/null
-#/home/ryota/workspace/tools/sratoolkit.2.9.2-ubuntu64/bin/fastq-dump \
-#  --split-3 --gzip \
-#  ${run_id} &> ${log} || exit 1
-#popd > /dev/null
+#${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log} || exit 1
+pushd ${fastq_dir} > /dev/null
+${fastq_dump} \
+  --split-3 --gzip \
+  ${run_id} &> ${log} || exit 1
+popd > /dev/null
 
 echo -e "Preprocessing ${run_id}"
 fastq_1=${fastq_dir}/${run_id}_1.fastq.gz
@@ -51,8 +52,6 @@ rm ${fastq_dir}/${run_id}_1.ecc.fastq \
    ${fastq_dir}/${run_id}_2.ecc.fastq \
    ${fastq_dir}/${run_id}_{1,2}.fastq.gz
 
-
-echo -e "Extracting spacers ${run_id}"
 fasta=${contig_dir}/scaffolds.fasta
 min_len=1000
 processed_fasta=${spacer_dir}/${run_id}.fasta
@@ -72,12 +71,13 @@ cat ${fasta} \
                  print seq; }}' \
   > ${processed_fasta} || exit 1
 
-${script_dir}/crt.sh ${processed_fasta} &>> ${log} || exit 1
-
-${script_dir}/collect_spacer.sh \
-  ${fastq_dir}/${run_id}.clean.fastq.gz \
-  ${processed_fasta%.fasta}.crispr_dr.fasta \
-  ${spacer_dir} &>> ${log} || exit 1
+#echo -e "Extracting spacers ${run_id}"
+#${script_dir}/crt.sh ${processed_fasta} &>> ${log} || exit 1
+#
+#${script_dir}/collect_spacer.sh \
+#  ${fastq_dir}/${run_id}.clean.fastq.gz \
+#  ${processed_fasta%.fasta}.crispr_dr.fasta \
+#  ${spacer_dir} &>> ${log} || exit 1
 
 echo -e "Detecting circularity ${run_id}"
 circular_fasta=${processed_fasta%.fasta}.circular.fasta

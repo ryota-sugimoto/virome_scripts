@@ -45,7 +45,7 @@ for s in args.blastout:
   fivedash_threedash_score = score_function(fivedash_adjacent,
                                             threedash_adjacent)
   
-  threshold = repeat_length*0.5
+  threshold = repeat_length*0.3
   if fivedash_adj_dr_score > threshold \
   or fivedash_adj_dr_rc_score > threshold:
     continue

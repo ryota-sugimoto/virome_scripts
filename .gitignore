@@ -1,3 +1,5 @@
 *test*
 *.log
 sample_list
+runs/human_gut/finished
+runs/human_gut/unfinished
