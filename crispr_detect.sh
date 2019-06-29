@@ -22,9 +22,16 @@ gff=${cat_fasta%.fasta}.crispr_detect.gff
 
 
 dr_n=0
+> ${fasta%.fasta}.crispr_dr.fasta
 grep 'repeat_region' ${gff} | cut -f 9 | while read info;
 do
   ((dr_n+=1))
   dr=$(echo ${info} | tr ';' '\n' | egrep '^Note' | cut -f 2 -d '=')
-  echo -e ">$(basename ${fasta})_${dr_n}\n${dr}"
+  echo -e ">$(basename ${fasta})_${dr_n}\n${dr}" \
+    >> ${fasta%.fasta}.crispr_dr.fasta
 done 
+cd-hit-est -S 1 -c 1 \
+  -i ${fasta%.fasta}.crispr_dr.fasta \
+  -o ${fasta%.fasta}.crispr_dr.clustered.fasta
+
+rm ${cat_fasta}
