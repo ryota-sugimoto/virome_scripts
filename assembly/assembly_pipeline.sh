@@ -6,10 +6,10 @@
 #TODO You must edit here
 spades="/home/r-sugimoto/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
 sambamba="/home/r-sugimoto/tools/sambamba-0.6.9-linux-static"
-fastq_dump="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/fastq-dump"
+fasterq_dump="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/fasterq-dump"
 tmp="/home/r-sugimoto/tmp"
 num_threads=10
-memory_cap=200
+memory_cap=400
 
 script_dir=$(cd $(dirname ${0}); pwd)
 
@@ -27,10 +27,10 @@ log=${out_dir}/${run_id}/log
 echo "Downloading ${run_id}"
 #${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log} || exit 1
 pushd ${fastq_dir} > /dev/null
-${fastq_dump} \
-  --split-3 --gzip \
-  ${run_id} &> ${log} || exit 1
+${fasterq_dump} ${run_id} &> ${log} || exit 1
 popd > /dev/null
+pigz -p 10 ${fastq_dir}/${run_id}_1.fastq
+pigz -p 10 ${fastq_dir}/${run_id}_2.fastq
 
 echo -e "Preprocessing ${run_id}"
 fastq_1=${fastq_dir}/${run_id}_1.fastq.gz

@@ -16,7 +16,8 @@ cat ${fasta} \
            seq = ""; }
          /^>/ {
            if (seq) print(id"\t"seq);
-           id = $0;
+           split($0,a," ");
+           id = a[1];
            seq = ""; }
          !/^>/ {
            seq = seq$0;
@@ -26,12 +27,11 @@ cat ${fasta} \
          }' \
   | while read id seq;
     do
-      > ${fasta%.fasta}.tmp.tetramer
       echo -e "${id}\n${seq}" \
         | ${jellyfish} count \
                        -m 4 \
                        -s 100M \
-                       -t 10 \
+                       -t 4 \
                        -C \
                        -o ${fasta%.fasta}.tmp.tetramer \
                        /dev/stdin
@@ -41,5 +41,5 @@ cat ${fasta} \
         | cut -f 2 -d ' ' \
         | cat <(echo ${id} | cut -f 1 -d ' ' | tr -d '>') - \
         | tr '\n' '\t' | cat - <(echo)
+      rm ${fasta%.fasta}.tmp.tetramer*
     done
-rm ${fasta%.fasta}.tmp.tetramer_*
