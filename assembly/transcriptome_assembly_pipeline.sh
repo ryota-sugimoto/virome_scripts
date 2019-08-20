@@ -4,12 +4,9 @@
 [ -d ${2} ] || { echo "ERROR: ${2} not exist"; exit 1; }
 
 #TODO You must edit here
-crispr_detect="/home/r-sugimoto/Virome/virome_scripts/analysis/spacer/crispr_detect.sh"
-crispr_detect="/home/r-sugimoto/Virome/virome_scripts/analysis/spacer/collect_spacer.sh"
 spades="/home/r-sugimoto/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
 sambamba="/home/r-sugimoto/tools/sambamba-0.6.9-linux-static"
-prefetch="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/prefetch"
-fastq_dump="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/fastq-dumph"
+fasterq_dump="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/fasterq-dump"
 tmp="/home/r-sugimoto/tmp"
 num_threads=10
 memory_cap=100
@@ -20,50 +17,54 @@ run_id=${1}
 out_dir=$(cd ${2}; pwd)
 
 mkdir -p ${out_dir}/${run_id}/{fastq,contig,result} || exit 1
-sample_dir=${out_dir}/${run_id}
-fastq_dir=${sample_dir}/fastq
-spades_dir=${sample_dir}/spades
-contig_dir=${sample_dir}/contig
-crispr_dir=${sample_dir}/crispr
-log=${sample_dir}/log
+fastq_dir=${out_dir}/${run_id}/fastq
+contig_dir=${out_dir}/${run_id}/contig
+result_dir=${out_dir}/${run_id}/result
+log=${out_dir}/${run_id}/log
 
 [ -f ${log} ] && rm ${log}
 
 echo "Downloading ${run_id}"
+#${script_dir}/wonderdump.sh ${run_id} ${fastq_dir} &> ${log} || exit 1
 pushd ${fastq_dir} > /dev/null
-${prefetch} -O ./ ${run_id} &> ${log} || exit 1
-${fastq_dump} --split-3 -M 0 --gzip ${run_id}.sra &> ${log} || exit 1
+/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/fastq-dump \
+  --split-3 -M 0 --gzip ${run_id} \
+  &> ${log} || exit 1
+[ -f ${fastq_dir}/${run_id}_3.fastq.gz ] \
+  && rm ${fastq_dir}/${run_id}_3.fastq.gz
+#${fasterq_dump} ${run_id} &> ${log} || exit 1
 popd > /dev/null
+#pigz -p 10 ${fastq_dir}/${run_id}_1.fastq
+#pigz -p 10 ${fastq_dir}/${run_id}_2.fastq
 
-echo "Preprocessing ${run_id}"
+echo -e "Preprocessing ${run_id}"
 fastq_1=${fastq_dir}/${run_id}_1.fastq.gz
 fastq_2=${fastq_dir}/${run_id}_2.fastq.gz
 ${script_dir}/preprocess_pairend.sh ${fastq_1} ${fastq_2} &>> ${log} || exit 1
 
-echo "Assembling ${run_id}"
+echo -e "Assembling ${run_id}"
 assembly_cmd=(${spades}
               -t ${num_threads}
               -m ${memory_cap}
-              --meta
-              --only-assembler
+              --rna
               -1 ${fastq_dir}/${run_id}_1.ecc.fastq
               -2 ${fastq_dir}/${run_id}_2.ecc.fastq
-              -o ${spades_dir})
+              -o ${contig_dir})
 ${assembly_cmd[@]} &>> ${log} || exit 1
 
 rm ${fastq_dir}/${run_id}_1.ecc.fastq \
    ${fastq_dir}/${run_id}_2.ecc.fastq \
    ${fastq_dir}/${run_id}_{1,2}.fastq.gz
 
-fasta=${spades_dir}/scaffolds.fasta
-min_len=1000
-processed_fasta=${contig_dir}/${run_id}.fasta
+fasta=${contig_dir}/transcripts.fasta
+min_len=0
+processed_fasta=${result_dir}/${run_id}.fasta
 cat ${fasta} \
   | awk -v run_id=${run_id} -v min_len=${min_len} \
         'BEGIN { n = 0; }
          /^>/ { l = length(seq);
                 if (n!=0 && l >= min_len) {
-                  printf(">CONTIG_%s_%i info=CONTIG,run_id:%s,contig_n:%i,length:%i,coverage:%f\n",
+                  printf(">TRANSCRIPT_%s_%i info=TRANSCRIPT,run_id:%s,contig_n:%i,length:%i,coverage:%f\n",
                          run_id, n, run_id, n, l,cov);
                   print seq; }
                 n += 1;
@@ -73,19 +74,13 @@ cat ${fasta} \
          /^[^>]/ { seq = seq""$0; }
          END { l = length(seq);
                if (length(seq) > min_len) {
-                 printf(">CONTIG_%s_%i info=CONTIG,run_id:%s,contig_n:%i,length:%i,coverage:%f\n",
+                 printf(">TRANSCRIPT_%s_%i info=TRANSCRIPT,run_id:%s,contig_n:%i,length:%i,coverage:%f\n",
                          run_id, n, run_id, n, l, cov);
                  print seq; }}' \
   > ${processed_fasta} || exit 1
 
-echo -e "Extracting spacers ${run_id}"
-pushd ${crispr_dir}
-cp ${processed_fasta} ./
-${crispr_detect} ./${run_id}.fasta || exit 1
-rm ./${run_id}.fasta
-popd
-${collect_spacer} ${sample_dir} &>> ${log} || exit 1
 
-rm -r ${spades_dir}
+mv ${fastq_dir}/${run_id}.clean.fastq.gz ${result_dir}/
+rm -r ${fastq_dir} ${contig_dir}
 gzip ${log}
-echo "Completed ${run_id}"
+echo -e "Completed ${run_id}"
