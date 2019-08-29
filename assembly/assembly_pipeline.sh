@@ -3,14 +3,16 @@
 [ $# == 2 ] || { echo "Usage: $(basename ${0}) <run_id> <out_dir>"; exit 1; }
 [ -d ${2} ] || { echo "ERROR: ${2} not exist"; exit 1; }
 
+#wait
+sleep $(shuf -i 1-100 -n 1)
+
 #TODO You must edit here
 crispr_detect="/home/r-sugimoto/Virome/virome_scripts/analysis/spacer/crispr_detect.sh"
-crispr_detect="/home/r-sugimoto/Virome/virome_scripts/analysis/spacer/collect_spacer.sh"
+collect_spacer="/home/r-sugimoto/Virome/virome_scripts/analysis/spacer/collect_spacer.sh"
 spades="/home/r-sugimoto/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
 sambamba="/home/r-sugimoto/tools/sambamba-0.6.9-linux-static"
 prefetch="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/prefetch"
-fastq_dump="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/fastq-dumph"
-tmp="/home/r-sugimoto/tmp"
+fastq_dump="/home/r-sugimoto/tools/parallel-fastq-dump/parallel-fastq-dump-0.6.5/parallel-fastq-dump -t 5"
 num_threads=10
 memory_cap=100
 
@@ -19,8 +21,9 @@ script_dir=$(cd $(dirname ${0}); pwd)
 run_id=${1}
 out_dir=$(cd ${2}; pwd)
 
-mkdir -p ${out_dir}/${run_id}/{fastq,contig,result} || exit 1
 sample_dir=${out_dir}/${run_id}
+mkdir -p ${sample_dir}/{fastq,contig,crispr,tmp} || exit 1
+tmp=${sample_dir}/tmp
 fastq_dir=${sample_dir}/fastq
 spades_dir=${sample_dir}/spades
 contig_dir=${sample_dir}/contig
@@ -32,8 +35,12 @@ log=${sample_dir}/log
 echo "Downloading ${run_id}"
 pushd ${fastq_dir} > /dev/null
 ${prefetch} -O ./ ${run_id} &> ${log} || exit 1
-${fastq_dump} --split-3 -M 0 --gzip ${run_id}.sra &> ${log} || exit 1
+${fastq_dump} --tmpdir ${tmp} --split-3 --gzip -s ${run_id}.sra &> ${log} || exit 1
+rm ${run_id}.sra
 popd > /dev/null
+
+[ -f ${fastq_dir}/${run_id}.fastq.gz ] \
+  && rm ${fastq_dir}/${run_id}.fastq.gz
 
 echo "Preprocessing ${run_id}"
 fastq_1=${fastq_dir}/${run_id}_1.fastq.gz
@@ -78,14 +85,25 @@ cat ${fasta} \
                  print seq; }}' \
   > ${processed_fasta} || exit 1
 
-echo -e "Extracting spacers ${run_id}"
-pushd ${crispr_dir}
-cp ${processed_fasta} ./
-${crispr_detect} ./${run_id}.fasta || exit 1
-rm ./${run_id}.fasta
-popd
-${collect_spacer} ${sample_dir} &>> ${log} || exit 1
+echo "Extracting spacers ${run_id}"
+cp ${processed_fasta} ${crispr_dir} || exit 1
+${crispr_detect} ${sample_dir} &>> ${log} || exit 1
+rm ${crispr_dir}/${run_id}.fasta
+${collect_spacer} ${sample_dir} &>> ${log}
+
+makeblastdb -in ${processed_fasta} -dbtype nucl &>> ${log}
+blastn \
+  -outfmt 6 \
+  -query ${crispr_dir}/${run_id}.crispr_dr.clustered.fasta \
+  -db ${processed_fasta} \
+  -qcov_hsp_perc 95 -perc_identity 95 -task 'blastn-short' 2> /dev/null \
+  | cut -f 1,2 | sort | uniq \
+  | sort -k 1,1 > ${crispr_dir}/${run_id}.dr_contig
 
 rm -r ${spades_dir}
+rm -r ${fastq_dir}
+rm -r ${tmp}
+rm ~/ncbi/public/sra/${run_id}.sra.cache
 gzip ${log}
+chmod a-wx $(find ${sample_dir} -type f)
 echo "Completed ${run_id}"
