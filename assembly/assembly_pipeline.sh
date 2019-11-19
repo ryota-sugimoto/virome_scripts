@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 
-[ $# == 2 ] || { echo "Usage: $(basename ${0}) <run_id> <out_dir>"; exit 1; }
-[ -d ${2} ] || { echo "ERROR: ${2} not exist"; exit 1; }
+[ $# == 3 ] || { echo "Usage: $(basename ${0}) <run_file> <run_id> <out_dir>"; exit 1; }
+[ -f ${1} ] || { echo "ERROR: ${1} not exist"; exit 1; }
+[ -d ${3} ] || { echo "ERROR: ${3} not exist"; exit 1; }
+
+script_dir=$(cd $(dirname ${0}); pwd)
+run_file=${1}
+run_id=${2}
+out_dir=$(cd ${3}; pwd) || exit 1
 
 #wait
-sleep $(shuf -i 1-100 -n 1)
+#sleep $(shuf -i 1-100 -n 1)
 
 #TODO You must edit here
 crispr_detect="/home/r-sugimoto/Virome/virome_scripts/analysis/spacer/crispr_detect.sh"
@@ -15,11 +21,6 @@ prefetch="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/prefetch"
 fastq_dump="/home/r-sugimoto/tools/parallel-fastq-dump/parallel-fastq-dump-0.6.5/parallel-fastq-dump -t 5"
 num_threads=10
 memory_cap=100
-
-script_dir=$(cd $(dirname ${0}); pwd)
-
-run_id=${1}
-out_dir=$(cd ${2}; pwd)
 
 sample_dir=${out_dir}/${run_id}
 mkdir -p ${sample_dir}/{fastq,contig,crispr,tmp} || exit 1
@@ -32,12 +33,30 @@ log=${sample_dir}/log
 
 [ -f ${log} ] && rm ${log}
 
+#Assumed table columns order
+#run_accession,sample_accession,base_count,fastq_bytes,fastq_ftp,fastq_md5
 echo "Downloading ${run_id}"
 pushd ${fastq_dir} > /dev/null
-${prefetch} -O ./ ${run_id} &> ${log} || exit 1
-${fastq_dump} --tmpdir ${tmp} --split-3 --gzip -s ${run_id}.sra &> ${log} || exit 1
-rm ${run_id}.sra
+grep ${run_id} ${run_file} \
+  | cut -f 5 | tr ';' '\n' \
+  | paste - <(grep ${run_id} ${run_file} | cut -f 6 | tr ';' '\n') \
+  | while read fastq_ftp fastq_md5;
+    do
+      wget \
+        --no-verbose \
+        --retry-connrefused \
+        --waitretry=30 \
+        --read-timeout=30 \
+        --timeout=30 \
+        -t 100 \
+        ftp://${fastq_ftp} || exit 1
+      echo "${fastq_md5} $(basename ${fastq_ftp})" | md5sum -c - || exit 1
+    done || exit 1
 popd > /dev/null
+
+#${prefetch} -O ./ ${run_id} &> ${log} || exit 1
+#${fastq_dump} --tmpdir ${tmp} --split-3 --gzip -s ${run_id}.sra &> ${log} || exit 1
+#rm ${run_id}.sra
 
 [ -f ${fastq_dir}/${run_id}.fastq.gz ] \
   && rm ${fastq_dir}/${run_id}.fastq.gz
@@ -100,6 +119,13 @@ blastn \
   | cut -f 1,2 | sort | uniq \
   | sort -k 1,1 > ${crispr_dir}/${run_id}.dr_contig
 
+rm -r ${spades_dir}/K21
+rm -r ${spades_dir}/K33
+rm -r ${spades_dir}/K55
+pushd ${sample_dir} &> /dev/null
+tar -cf - $(basename ${spades_dir}) | pigz -p ${num_threads} \
+  > $(basename ${spades_dir}).tar.gz
+popd &> /dev/null
 rm -r ${spades_dir}
 rm -r ${fastq_dir}
 rm -r ${tmp}

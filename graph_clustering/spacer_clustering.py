@@ -4,6 +4,26 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('protospacers_bedfile',
                     type=argparse.FileType('r'))
+parser.add_argument('-c', '--min_cluster_size',
+                    type=int,
+                    default=3)
+parser.add_argument('-t', '--min_co_occurance',
+                    type=int,
+                    default=3)
+parser.add_argument('-d', '--min_dice_coefficient',
+                    type=float,
+                    default=0.05)
+parser.add_argument('-a', '--community_detection_algorithm',
+                    type=str,
+                    choices=['labelpropagation', 'walktrap'],
+                    default='walktrap')
+parser.add_argument('-k', '--centrality_algorithm',
+                    type=str,
+                    choices=['pagerank', 'eigenvector', 'degree'],
+                    default='pagerank')
+parser.add_argument('-s', '--min_keyspacer_score',
+                    type=float,
+                    default=0.7)
 args = parser.parse_args()
 
 d = {}
@@ -42,10 +62,10 @@ spacer_cooccur_mat = contig_spacer_mat.T * contig_spacer_mat
 
 import igraph
 
-min_sig = 0.05
 i,j,v = find(spacer_cooccur_mat)
 diag = spacer_cooccur_mat.diagonal()
-w = np.where( 2*v/(diag[i]+diag[j]) > min_sig, v, 0)
+w = np.where(np.logical_and(2*v/(diag[i]+diag[j]) >= args.min_dice_coefficient,
+                            v >= args.min_co_occurance), v, 0)
 spacer_cooccur_mat_ = csr_matrix((w, (i,j)),
                                  shape=spacer_cooccur_mat.shape)
 spacer_cooccur_mat_.setdiag(0)
@@ -57,61 +77,51 @@ g = igraph.Graph(list(zip(row.tolist(), col.tolist())),
                  edge_attrs={'weight': data.tolist()})
 components = g.components()
 
-print('all_assort', g.assortativity_degree(directed=False))
-print('all_transitivity', g.transitivity_undirected())
 def cov_d(d, names):
   keys = []
   for name in names:
     keys += list(key for key in d if name in d[key])
   return len(set(keys))
 
-N = len(d)
-print('N', N)
 res = []
 for comp in components:
   if len(comp) == 1:
-    res.append(['*' + g.subgraph(comp).vs['name'][0]])
+    if args.min_cluster_size == 1:
+      res.append(['*' + g.subgraph(comp).vs['name'][0]])
     continue
 
+
   comp_g = g.subgraph(comp)
-  print('N_comp', len(comp))
-  print('comp_assort', comp_g.assortativity_degree(directed=False))
-  print('comp_transitivity', comp_g.transitivity_undirected())
-  #communities = comp_g.community_label_propagation(weights='weight')
-  #communities = comp_g.community_multilevel(weights='weight')
-  #communities = comp_g.community_spinglass(weights='weight')
-  communities = comp_g.community_walktrap(weights='weight').as_clustering()
-  
+  if args.community_detection_algorithm == 'labelpropagation':
+    communities = comp_g.community_label_propagation(weights='weight')
+  elif args.community_detection_algorithm == 'walktrap':
+    communities = comp_g.community_walktrap(weights='weight').as_clustering()
+  else:
+    raise('something is wrong')
+
+  report = []
   for comm in communities:
-    N_comm = len(comm)
+    N_comm = int(len(comm))
+    if not N_comm >= args.min_cluster_size:
+      continue
     comm_g = comp_g.subgraph(comm)
     comm_spacer_names = np.array(comm_g.vs['name'])
-    print('N_comm', N_comm)
-    print('comm_assort', comm_g.assortativity_degree(directed=False))
-    print('comm_transitivity', comm_g.transitivity_undirected())
+    report.append((N_comm,
+                   comm_g.assortativity_degree(directed=False),
+                   comm_g.transitivity_undirected()))
     
-    '''
-    cscores = np.array(comm_g.evcent(directed=False, weights='weight'))
-    print('eigenvalue', cscores, np.sum(cscores))
-    keyspacers_index = (cscores >= 0.9).nonzero()
-    keyspacers = set(comm_spacer_names[keyspacers_index])
-    print('eigenvalue', N_comm, len(keyspacers_index[0]), cov_d(d, keyspacers))
-    '''
- 
-    cscores = np.array(comm_g.pagerank(directed=False, weights='weight'))
-    #print('pagerank', cscores/np.max(cscores), np.sum(cscores))
-    cscores /= np.max(cscores)
-    keyspacers_index = (cscores >= 0.9).nonzero()
+    if args.centrality_algorithm == 'eigenvector':
+      cscores = np.array(comm_g.evcent(directed=False, weights='weight'))
+    elif args.centrality_algorithm == 'pagerank':
+      cscores = np.array(comm_g.pagerank(directed=False, weights='weight'))
+      cscores /= np.max(cscores)
+    elif args.centrality_algorithm == 'degree':
+      cscores = np.array(comm_g.degree(loops=False))
+      cscores /= np.max(cscores)
+    else:
+      raise('something is wrong')
+    keyspacers_index = (cscores >= args.min_keyspacer_score).nonzero()
     keyspacers = comm_spacer_names[keyspacers_index]
-    #print('pagerank', N_comm, len(keyspacers_index[0]), cov_d(d, keyspacers))
-
-    '''
-    cscores = np.array(comm_g.degree(loops=False))
-    #keyspacers_index = np.argsort(cscores)[-min(N_comm, top_n):]
-    keyspacers_index = (cscores >= 0.8 * np.max(cscores)).nonzero()
-    keyspacers = comm_spacer_names[keyspacers_index]
-    print('degree', N_comm, len(keyspacers_index[0]), cov_d(d, keyspacers))
-    '''
 
     res.append(list(name if name not in keyspacers else '*'+name for name in comm_spacer_names))
 
