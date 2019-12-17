@@ -3,39 +3,37 @@
 import argparse
 from Bio import SeqIO
 from Bio import pairwise2
+from Bio.pairwise2 import format_alignment
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('fasta', type=argparse.FileType('r'))
-parser.add_argument('--seed_length', type=int, default=15)
-parser.add_argument('--slide_size', type=int, default=5)
-parser.add_argument('--num_slide', type=int, default=10)
-parser.add_argument('--max_redundancy', type=int, default=5000)
+parser.add_argument('--seed_length', type=int, default=23)
+parser.add_argument('--slide_size', type=int, default=10)
+parser.add_argument('--num_slide', type=int, default=30)
+parser.add_argument('--max_redundancy_coverage', type=float, default=0.5)
+parser.add_argument('--max_alignment_length', type=int, default=10000)
+parser.add_argument('--make_concatemer', default=False,
+                    action='store_true')
 args = parser.parse_args()
 
 for record in SeqIO.parse(args.fasta, 'fasta'):
-  seed_begin = 0
-  seed_end = args.seed_length
-  f = False
   for i in range(args.num_slide):
+    seed_begin = i*args.slide_size
+    seed_end = seed_begin + args.seed_length
     seed = record.seq[seed_begin:seed_end]
     pos = record.seq.rfind(seed, seed_end)
-    l = len(record.seq) - pos
-    if pos > len(record)*0.5 and l <= args.max_redundancy:
-      seq1 = record.seq[:i*args.slide_size+l]
-      seq2 = record.seq[pos-i*args.slide_size:]
-      score = pairwise2.align.globalms(seq1, seq2, 1, -1, -1, -0.5,
-                                       score_only=True)
-      if score >= len(seq1)*0.9:
-        f = True
-        seq = record.seq[:pos-i*args.slide_size]
-        print('>'+record.id+'_nonredun_{}'.format(len(seq)))
-        print(seq)
-        break
-      else:
-        break
-  if not f:
-    print('>'+record.id)
-    print(record.seq)
-    
-    seed_begin += args.slide_size
-    seed_end += args.slide_size
+    alignment_length = seed_begin + len(record.seq) - pos
+    if pos != -1:
+      if alignment_length < len(record.seq)*args.max_redundancy_coverage \
+           and alignment_length < args.max_alignment_length:
+        seq1 = record.seq[:alignment_length]
+        seq2 = record.seq[-alignment_length:]
+        alignments = pairwise2.align.globalms(seq1, seq2, 1, -1, -1, -0.5)
+        if alignments[0][2] >= alignment_length*0.9:
+          if args.make_concatemer:
+            record.seq = 2*record.seq[:-alignment_length]
+          else:
+            record.seq = record.seq[:-alignment_length]
+          SeqIO.write(record, sys.stdout, "fasta")
+          break

@@ -16,7 +16,7 @@ parser.add_argument('-d', '--min_dice_coefficient',
 parser.add_argument('-a', '--community_detection_algorithm',
                     type=str,
                     choices=['labelpropagation', 'walktrap'],
-                    default='walktrap')
+                    default='labelpropagation')
 parser.add_argument('-k', '--centrality_algorithm',
                     type=str,
                     choices=['pagerank', 'eigenvector', 'degree'],
@@ -84,6 +84,7 @@ def cov_d(d, names):
   return len(set(keys))
 
 res = []
+report = []
 for comp in components:
   if len(comp) == 1:
     if args.min_cluster_size == 1:
@@ -99,7 +100,6 @@ for comp in components:
   else:
     raise('something is wrong')
 
-  report = []
   for comm in communities:
     N_comm = int(len(comm))
     if not N_comm >= args.min_cluster_size:
@@ -124,6 +124,8 @@ for comp in components:
     keyspacers = comm_spacer_names[keyspacers_index]
 
     res.append(list(name if name not in keyspacers else '*'+name for name in comm_spacer_names))
+    
 
-for names in res:
-  print(','.join(map(str,names)))
+for i,((N_comm, assort, clstr), names) in enumerate(zip(report, res)):
+  print('\t'.join([str(i), str(N_comm), str(assort), str(clstr), 
+                   str(','.join(map(str, names)))]))
