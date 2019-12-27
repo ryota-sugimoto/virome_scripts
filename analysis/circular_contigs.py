@@ -15,6 +15,10 @@ parser.add_argument('--max_redundancy_coverage', type=float, default=0.5)
 parser.add_argument('--max_alignment_length', type=int, default=10000)
 parser.add_argument('--make_concatemer', default=False,
                     action='store_true')
+parser.add_argument('--show_alignment', default=False,
+                    action='store_true')
+parser.add_argument('--no_trim', default=False,
+                    action='store_true')
 args = parser.parse_args()
 
 for record in SeqIO.parse(args.fasta, 'fasta'):
@@ -29,11 +33,18 @@ for record in SeqIO.parse(args.fasta, 'fasta'):
            and alignment_length < args.max_alignment_length:
         seq1 = record.seq[:alignment_length]
         seq2 = record.seq[-alignment_length:]
-        alignments = pairwise2.align.globalms(seq1, seq2, 1, -1, -1, -0.5)
-        if alignments[0][2] >= alignment_length*0.9:
-          if args.make_concatemer:
-            record.seq = 2*record.seq[:-alignment_length]
-          else:
+        if args.show_alignment:
+          alignments = pairwise2.align.globalms(seq1, seq2, 1, -1, -1, -1)
+          score = alignments[0][2]
+        else:
+          score = pairwise2.align.globalms(seq1, seq2, 1, -1, -1, -1,
+                                           score_only=True)
+        if score >= alignment_length*0.9:
+          if not args.no_trim:
             record.seq = record.seq[:-alignment_length]
+          if args.show_alignment:
+            print('alignment_length='+str(alignment_length))
+            print(format_alignment(*alignments[0]))
           SeqIO.write(record, sys.stdout, "fasta")
+          sys.stdout.flush()
           break

@@ -129,7 +129,6 @@ popd &> /dev/null
 rm -r ${spades_dir}
 rm -r ${fastq_dir}
 rm -r ${tmp}
-rm ~/ncbi/public/sra/${run_id}.sra.cache
 gzip ${log}
 chmod a-wx $(find ${sample_dir} -type f)
 echo "Completed ${run_id}"
