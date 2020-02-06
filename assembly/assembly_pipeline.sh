@@ -19,8 +19,9 @@ spades="/home/r-sugimoto/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
 sambamba="/home/r-sugimoto/tools/sambamba-0.6.9-linux-static"
 prefetch="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/prefetch"
 fastq_dump="/home/r-sugimoto/tools/parallel-fastq-dump/parallel-fastq-dump-0.6.5/parallel-fastq-dump -t 5"
-num_threads=10
-memory_cap=100
+prodigal=~/tools/prodigal/Prodigal-2.6.3/prodigal
+num_threads=20
+memory_cap=1000
 
 sample_dir=${out_dir}/${run_id}
 mkdir -p ${sample_dir}/{fastq,contig,crispr,tmp} || exit 1
@@ -44,13 +45,10 @@ grep ${run_id} ${run_file} \
     do
       wget \
         --no-verbose \
-        --retry-connrefused \
         --waitretry=30 \
-        --read-timeout=30 \
-        --timeout=30 \
-        -t 100 \
-        ftp://${fastq_ftp} || exit 1
-      echo "${fastq_md5} $(basename ${fastq_ftp})" | md5sum -c - || exit 1
+        -t 20 \
+        ftp://${fastq_ftp} &>> ${log} || exit 1
+      echo "${fastq_md5} $(basename ${fastq_ftp})" | md5sum -c - &>> ${log} || exit 1
     done || exit 1
 popd > /dev/null
 
@@ -103,6 +101,13 @@ cat ${fasta} \
                          run_id, n, run_id, n, l, cov);
                  print seq; }}' \
   > ${processed_fasta} || exit 1
+
+echo "Gene prediction ${run_id}"
+${prodigal} -q -m \
+            -i ${processed_fasta} \
+            -a ${processed_fasta%.fasta}.proteins.fasta \
+            -p meta \
+            -o ${processed_fasta%.fasta}.gbk &>> ${log}
 
 echo "Extracting spacers ${run_id}"
 cp ${processed_fasta} ${crispr_dir} || exit 1
