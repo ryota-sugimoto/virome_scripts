@@ -26,7 +26,7 @@ cmd=(${bbmap}
      maxsites=1000
      sssr=0.8
      maxindel=1
-     minid=0.95
+     minid=0.93
      threads=20
      ref=${contig_fasta}
      path=${contig_dir}
@@ -60,7 +60,7 @@ cmd=(${bbmap}
      maxsites=1000
      sssr=0.8
      maxindel=1
-     minid=0.95
+     minid=0.93
      threads=20
      ref=${crispr_masked_fasta}
      path=${contig_dir}
@@ -82,3 +82,4 @@ ${bedtools} bamtobed -i ${bam} > ${spacer_bed} || exit 1
 rm ${spacer_bed}
 rm -r ${contig_dir}/ref
 chmod a-w ${contig_dir}/*
+echo "${run_id} completed"
