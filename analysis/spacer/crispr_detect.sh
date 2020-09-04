@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 [ $# == 1 ] || { echo "Usage: $(basename $0) <dir>"; exit 1; }
-[ -d ${1} ] || { echo "ERROR: ${0} not found."; exit 1; }
+[ -d ${1} ] || { echo "ERROR: ${1} not found."; exit 1; }
 
 dir=${1}
 id=$(basename ${dir})
@@ -21,7 +21,7 @@ ${crispr_detect} -q 0 \
                  -tmp_dir ${tmp} \
                  -f ${cat_fasta} \
                  -o ${cat_fasta%.fasta}.crispr_detect \
-                 -array_quality_score_cutoff 3 || exit 1
+                 -array_quality_score_cutoff 2 || exit 1
 
 gff=${cat_fasta%.fasta}.crispr_detect.gff
 [ -f ${gff} ] || { echo 'missing gff file.'; exit 1; }

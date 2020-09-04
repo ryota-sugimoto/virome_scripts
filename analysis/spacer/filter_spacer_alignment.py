@@ -18,6 +18,7 @@ score_function = lambda s1,s2: pairwise2.align.globalms(s1, s2,
 for s in args.alignment_bed:
   l = s.split('\t')
   contig, start, end, query, score, strand = l
+  contig = contig.split()[0]
   start = int(start)
   end = int(end)
   query_info = dict(m.split(':') 

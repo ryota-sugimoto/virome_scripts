@@ -67,7 +67,6 @@ spacer_cooccur_mat_ = csr_matrix((w, (i,j)),
                                  shape=spacer_cooccur_mat.shape)
 spacer_cooccur_mat_.setdiag(0)
 spacer_cooccur_mat_.eliminate_zeros()
-print(spacer_cooccur_mat_.todense())
 
 import igraph
 from scipy.sparse import triu
@@ -87,10 +86,9 @@ for cluster_id, cluster in enumerate(clusters):
   subg = g.subgraph(cluster)
   clustering_coefficient = subg.transitivity_undirected()
   
-  #degrees = np.array(subg.degree(loops=False), dtype=np.float)
   degrees = np.array(subg.strength(loops=False, weights='weight'),
                      dtype=np.float)
-  #degrees /= np.max(degrees)
+  degrees /= np.max(degrees)
   subg_spacers = np.array(subg.vs['name'])
   keyed_subg_spacers = list(s+':'+str(d) 
                        for s,d in zip(subg_spacers, degrees))
