@@ -14,8 +14,8 @@ cat ${fasta} \
   | while read id seq;
     do
       echo -e "${id}\n${seq}" > ${tmpdir}/tmp.fasta
-      jellyfish count -m 21 -s 100M -t 10 -o ${tmpdir}/mer ${tmpdir}/tmp.fasta
-      jellyfish histo ${tmpdir}/mer_0 \
+      jellyfish count -C -m 11 -s 1M -t 10 -o ${tmpdir}/mer ${tmpdir}/tmp.fasta
+      jellyfish histo ${tmpdir}/mer \
       | awk -v id=${id} 'BEGIN{a[1]=0; a[2]=0; a[3]=0; OFS="\t"}
                          { a[$1] = $2 }
                          END{ print id,a[1],a[2],a[3] }' \

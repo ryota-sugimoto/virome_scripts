@@ -8,14 +8,14 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('fasta', type=argparse.FileType('r'))
-parser.add_argument('--seed_length', type=int, default=21)
+parser.add_argument('--seed_length', type=int, default=23)
 parser.add_argument('--slide_size', type=int, default=10)
 parser.add_argument('--num_slide', type=int, default=30)
 parser.add_argument('--min_iterate_alignment_score', type=float, default=0.9)
 parser.add_argument('--max_iterate', type=int, default=100)
 parser.add_argument('--max_fail_count', type=int, default=10)
-parser.add_argument('--max_alignment_length', type=int, default=10000)
-parser.add_argument('--min_alignment_length', type=int, default=25)
+parser.add_argument('--max_alignment_length', type=int, default=1000)
+parser.add_argument('--min_alignment_length', type=int, default=40)
 parser.add_argument('--show_alignment', default=False,
                     action='store_true')
 parser.add_argument('--no_trim' , default=False,
@@ -27,6 +27,8 @@ for record in SeqIO.parse(args.fasta, 'fasta'):
     seed_begin = i*args.slide_size
     seed_end = seed_begin + args.seed_length
     seed = record.seq[seed_begin:seed_end]
+    if len(seed) != args.seed_length:
+      break
     seed_rc = seed.reverse_complement()
     pos = record.seq.rfind(seed_rc,
                            int(len(record.seq)*0.9))
@@ -50,7 +52,7 @@ for record in SeqIO.parse(args.fasta, 'fasta'):
         else:
           score = pairwise2.align.globalms(seq1, seq2_rc, 1, -1, -1, -1,
                                            score_only=True)
-        if score > alignment_length*args.min_iterate_alignment_score:
+        if score > alignment_length * args.min_iterate_alignment_score:
           offset = offset + expand
           expand *= 2
         else:
@@ -63,10 +65,10 @@ for record in SeqIO.parse(args.fasta, 'fasta'):
         print('seed_pos', pos+args.seed_length)
         print('alignment_length', alignment_length)
         print(format_alignment(*alignments[0]))
-      if score > alignment_length * 0.85 \
-        and alignment_length > args.min_alignment_length:
+      if score > alignment_length * 0.8 \
+             and alignment_length > args.min_alignment_length:
         if not args.no_trim:
           record.seq = record.seq[seed_begin:pos+args.seed_length] 
-          SeqIO.write(record, sys.stdout, "fasta")
-          sys.stdout.flush()
+        SeqIO.write(record, sys.stdout, "fasta")
+        sys.stdout.flush()
       break

@@ -5,18 +5,25 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--id_list',
                     type=argparse.FileType('r'))
 parser.add_argument('-v', '--complement', action='store_true', default=False)
+parser.add_argument('-q', '--fastq', action='store_true', default=False)
+
 parser.add_argument('id', type=str, nargs='?')
 parser.add_argument('fasta', type=argparse.FileType('r'))
 args = parser.parse_args()
 
-
+id_set = {}
 if args.id_list:
-  id_set = set(s.strip() for s in args.id_list)
+  for s in args.id_list:
+    l = s.strip().split()
+    if len(l) < 1:
+      id_set[l[0]] = l[1]
+    else:
+      id_set[l[0]] = None
 else:
-  id_set = set([])
+  id_set = {}
 
-if args.id:
-  id_set.update([args.id])
+if not args.id_list and args.id:
+  id_set[args.id] = None
 
 import sys
 from Bio import SeqIO
@@ -26,6 +33,10 @@ if args.complement:
 else:
   f = lambda a,b: a in b
 
-for record in SeqIO.parse(args.fasta, 'fasta'):
+if args.fastq:
+  fmt = 'fastq'
+else:
+  fmt = 'fasta'
+for record in SeqIO.parse(args.fasta, fmt):
   if f(record.id, id_set):
-    SeqIO.write(record, sys.stdout, 'fasta')
+    SeqIO.write(record, sys.stdout, fmt)
