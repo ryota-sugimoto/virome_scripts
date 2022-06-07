@@ -14,8 +14,8 @@ crispr_dr_fasta=${result_dir}/crispr/${id}.crispr_dr.clustered.fasta
 script_dir=$(cd $(dirname ${0}); pwd)
 
 #TODO You must edit here
-bbmap="~/tools/bbmap"
-cdhit="~/tools/cd-hit-v4.6.8-2017-1208/cd-hit-est"
+bbmap=~/tools/bbtools/bbmap/
+cdhit=~/tools/cd-hit-v4.6.8-2017-1208/cd-hit-est
 
 putative_spacer_fastq=${result_dir}/crispr/tmp_putative_spacers.fastq
 cmd1=(${bbmap}/bbduk.sh

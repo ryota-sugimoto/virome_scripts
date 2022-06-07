@@ -8,7 +8,7 @@ id=$(basename ${dir})
 fasta=${dir}/crispr/${id}.fasta
 
 #TODO You must edit this
-crispr_detect="~/tools/PROJECTS/CRISPRDetect_2.2/CRISPRDetect.pl"
+crispr_detect=~/tools/PROJECTS/CRISPRDetect_2.2/CRISPRDetect.pl
 tmp=$(mktemp -d ~/tmp/XXXXXXXXXXXXXXXXX)
 
 cat_fasta=${fasta%.fasta}.cat.fasta

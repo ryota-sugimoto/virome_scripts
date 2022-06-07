@@ -5,7 +5,7 @@
 [ -d ${3} ] || { echo "ERROR: ${3} not exist"; exit 1; }
 
 script_dir=$(cd $(dirname ${0}); pwd)
-run_file=${1}
+run_file=$(cd $(dirname ${1}); pwd)/$(basename ${1})
 run_id=${2}
 out_dir=$(cd ${3}; pwd) || exit 1
 
@@ -16,10 +16,10 @@ crispr_detect="${script_dir}/crispr_detect.sh"
 collect_spacer="${script_dir}/collect_spacers.sh"
 
 #TODO You must edit here
-spades="~/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
-prodigal="~/tools/prodigal/Prodigal-2.6.3/prodigal"
+spades=~/tools/spades-3.15.3/SPAdes-3.15.3-Linux/bin/spades.py
+prodigal=~/tools/prodigal/Prodigal-2.6.3/prodigal
 num_threads=20
-memory_cap=1000
+memory_cap=100 #GiB
 
 sample_dir=${out_dir}/${run_id}
 mkdir -p ${sample_dir}/{fastq,contig,crispr,tmp} || exit 1

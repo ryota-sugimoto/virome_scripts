@@ -4,11 +4,11 @@
 [ -f ${2} ] || { echo "$2 not exist"; exit 1; }
 
 #TODO You must edit here
-bbmap_dir="~/tools/bbtools/bbmap/"
-human_ref="~/tools/bbtools/bbmap/resources/human_masked"
-tmp_dir="~/tmp"
+bbmap_dir=~/tools/bbtools/bbmap/
+human_ref=~/tools/bbtools/bbmap/resources/human_masked
+tmp_dir=~/tmp
 num_threads=10
-memory_cap=100
+memory_cap=100 #GiB
 
 fastq_1=${1}
 fastq_2=${2}
