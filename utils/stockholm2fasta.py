@@ -17,11 +17,8 @@ for s in args.stockholm:
   if s[0] == '#' or s.strip() == '':
     continue
   if s.strip() == '//':
-    with open('{}_{}.fasta'.format(os.path.basename(os.path.splitext(args.stockholm.name)[0]),
-                                  file_n),
-             'w') as f:
-      for record in records:
-        SeqIO.write(record, f, 'fasta')
+    for record in records:
+      SeqIO.write(record, sys.stdout, 'fasta')
     file_n += 1
     records = []
     continue

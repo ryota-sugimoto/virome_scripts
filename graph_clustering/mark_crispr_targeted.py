@@ -95,13 +95,13 @@ for contig in bed_db:
         prev = intervals[i]
         count = 1
     if count > clusterid_size[clusterid]*args.min_cluster_ratio:
-       if prev.lower - extend < 0:
-         lower = 0
-       else:
-         lower = prev.lower - extend
-       upper = prev.upper + extend
-       new_interval = P.closedopen(lower, upper)
-       new_intervals.append((new_interval, clusterid, count))
+      if prev.lower - extend < 0:
+        lower = 0
+      else:
+        lower = prev.lower - extend
+      upper = prev.upper + extend
+      new_interval = P.closedopen(lower, upper)
+      new_intervals.append((new_interval, clusterid, count))
   if new_intervals:
     merged_bed[contig] = new_intervals
 
