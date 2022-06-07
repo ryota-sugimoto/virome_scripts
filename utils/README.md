@@ -1,6 +1,6 @@
 # Utility scripts
 
-This directory contains utility scripts for various purposes.
+This directory contains utility scripts for the various purposes.
 
 ## circular_contigs.py
 
@@ -23,7 +23,7 @@ Concatenate seuqneces from the input FASTA file in tandem and output to the stdo
 
 ## filter_fasta_by_id.py
 
-Filter FASTA records with specific IDs from the input FASTA file. The IDs can be specifed by the command or a file with the `-f` option. The ID file should be listing the FASTA records each line.
+Filter out the FASTA records with specific IDs from the input FASTA file. The IDs can be specifed by the command or a file with the `-f` option. The ID file should be listing the FASTA records in each line.
 
 ### Example
 ```
@@ -31,7 +31,7 @@ Filter FASTA records with specific IDs from the input FASTA file. The IDs can be
 ./filter_fasta_by_id.py -f id_file input.fasta > filtered.fasta
 ```
 
-## gc_contetns.py
+## gc_contents.py
 
 Calculate GC contents of the sequence. Each line of the stdout corresponds to a record in the input FASTA file, which is seperated by tabular. The first column is the record ID and the second column is the GC%.
 
@@ -81,7 +81,7 @@ Remove records that contain gapped sequence from the input FASTA file.
 ```
 
 ## rename_fasta.py
-Rename IDs in the input FASTA file according to the tabular formatted text file.The tabular text file contains two columns; the first column is the original ID and the second column is the new ID.
+Rename IDs in the input FASTA file according to the tabular formatted text file. The tabular text file contains two columns; the first column is the original ID and the second column is the new ID.
 
 ### Example
 ```
@@ -89,7 +89,7 @@ Rename IDs in the input FASTA file according to the tabular formatted text file.
 ```
 
 ## reverse_complement.py
-Revese complement the all sequnces in the FASTA file.
+Output revese complement of the all sequnces in the FASTA file.
 
 ### Example
 ```
@@ -113,7 +113,7 @@ Shuffle sequences in the FASTA file randomly.
 ```
 
 ## split_fasta.py
-Split records in the input FASTA file to the seperate files. The number of recors in the split file can be change with the `-s` option.
+Split records in the input FASTA file to the seperate files. The number of records in a split file can be change with the `-s` option.
 
 ### Example
 ```
