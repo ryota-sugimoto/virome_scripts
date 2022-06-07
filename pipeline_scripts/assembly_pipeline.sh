@@ -13,7 +13,7 @@ out_dir=$(cd ${3}; pwd) || exit 1
 #sleep $(shuf -i 1-100 -n 1)
 
 crispr_detect="${script_dir}/crispr_detect.sh"
-collect_spacer="${script_dir}/collect_spacer.sh"
+collect_spacer="${script_dir}/collect_spacers.sh"
 
 #TODO You must edit here
 spades="~/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
