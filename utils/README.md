@@ -6,13 +6,20 @@ This directory contains utility scripts for various purposes.
 
 Extract terminally redundant (TR) sequences from the input FASTA file.
 The script takes a FASTA file as input and outputs only TR sequences to the stdout.
-“Example: ./circular_contigs input.fasta > tr.fasta
+
+### Example
+```
+./circular_contigs input.fasta > tr.fasta
+```
 
 ## concatemer.py
 
-Concatenate seuqneces from the input FASTA file in tandem and output to the stdout.
+Concatenate seuqneces from the input FASTA file in tandem and output to the stdout. The number of repeats can be changed with the `-n` option.
 
-Example: ./concatemer -n 2 input.fasta > concate.fasta #Concatenate two times
+### Example
+```
+./concatemer -n 2 input.fasta > concate.fasta #Concatenate two times
+```
 
 ## filter_fasta_by_id.py
 
