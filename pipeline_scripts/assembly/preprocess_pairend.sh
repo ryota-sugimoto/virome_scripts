@@ -4,9 +4,9 @@
 [ -f ${2} ] || { echo "$2 not exist"; exit 1; }
 
 #TODO You must edit here
-bbmap_dir="/home/r-sugimoto/tools/bbtools/bbmap/"
-human_ref="/home/r-sugimoto/tools/bbtools/bbmap/resources/human_masked"
-tmp_dir="/home/r-sugimoto/tmp"
+bbmap_dir="~/tools/bbtools/bbmap/"
+human_ref="~/tools/bbtools/bbmap/resources/human_masked"
+tmp_dir="~/tmp"
 num_threads=10
 memory_cap=100
 

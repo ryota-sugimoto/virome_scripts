@@ -7,7 +7,9 @@ dir=${1}
 id=$(basename ${dir})
 fasta=${dir}/crispr/${id}.fasta
 
-crispr_detect="/home/r-sugimoto/tools/PROJECTS/CRISPRDetect_2.2/CRISPRDetect.pl"
+#TODO You must edit this
+crispr_detect="~/tools/PROJECTS/CRISPRDetect_2.2/CRISPRDetect.pl"
+tmp=$(mktemp -d ~/tmp/XXXXXXXXXXXXXXXXX)
 
 cat_fasta=${fasta%.fasta}.cat.fasta
 { echo ">${id}_allcat"; \
@@ -15,7 +17,6 @@ cat_fasta=${fasta%.fasta}.cat.fasta
   | tr -d '\n'; } > ${cat_fasta}
 
 [ -d /dev/shm/r-sugimoto/tmp ] || { mkdir -p /dev/shm/r-sugimoto/tmp; }
-tmp=$(mktemp -d /dev/shm/r-sugimoto/tmp/XXXXXXXXXXXXXXXXX)
 
 ${crispr_detect} -q 0 \
                  -tmp_dir ${tmp} \

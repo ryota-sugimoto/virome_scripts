@@ -12,14 +12,12 @@ out_dir=$(cd ${3}; pwd) || exit 1
 #wait
 #sleep $(shuf -i 1-100 -n 1)
 
+crispr_detect="${script_dir}/../spacer_analysis/crispr_detect.sh"
+collect_spacer="${script_dir}/../spacer_analysis/collect_spacer.sh"
+
 #TODO You must edit here
-crispr_detect="/home/r-sugimoto/Virome/virome_scripts/analysis/spacer/crispr_detect.sh"
-collect_spacer="/home/r-sugimoto/Virome/virome_scripts/analysis/spacer/collect_spacer.sh"
-spades="/home/r-sugimoto/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
-sambamba="/home/r-sugimoto/tools/sambamba-0.6.9-linux-static"
-prefetch="/home/r-sugimoto/tools/sratoolkit.2.9.2-ubuntu64/bin/prefetch"
-fastq_dump="/home/r-sugimoto/tools/parallel-fastq-dump/parallel-fastq-dump-0.6.5/parallel-fastq-dump -t 5"
-prodigal=~/tools/prodigal/Prodigal-2.6.3/prodigal
+spades="~/tools/SPAdes/SPAdes-3.12.0-Linux/bin/spades.py"
+prodigal="~/tools/prodigal/Prodigal-2.6.3/prodigal"
 num_threads=20
 memory_cap=1000
 
@@ -34,8 +32,6 @@ log=${sample_dir}/log
 
 [ -f ${log} ] && rm ${log}
 
-#Assumed table columns order
-#run_accession,sample_accession,base_count,fastq_bytes,fastq_ftp,fastq_md5
 echo "Downloading ${run_id}"
 pushd ${fastq_dir} > /dev/null
 grep ${run_id} ${run_file} \
@@ -51,10 +47,6 @@ grep ${run_id} ${run_file} \
       echo "${fastq_md5} $(basename ${fastq_ftp})" | md5sum -c - &>> ${log} || exit 1
     done || exit 1
 popd > /dev/null
-
-#${prefetch} -O ./ ${run_id} &> ${log} || exit 1
-#${fastq_dump} --tmpdir ${tmp} --split-3 --gzip -s ${run_id}.sra &> ${log} || exit 1
-#rm ${run_id}.sra
 
 [ -f ${fastq_dir}/${run_id}.fastq.gz ] \
   && rm ${fastq_dir}/${run_id}.fastq.gz
