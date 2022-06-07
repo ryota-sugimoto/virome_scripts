@@ -2,7 +2,7 @@
 This directory contains pipeline scripts for the genome assembly and the spacer collection. To execute the pipeline, user must edit the following scripts to specify the paths to the programs: assembly_pipeline.sh, preprocess_pairend.sh, collect_spacers.sh, and crispr_detect.sh. See the comments in the README file for the details.
 
 ## assembly_pipeline.sh
-The main routine of the protocol. The script requires a file which contains the sample IDs and the ftp URLs for the FASTQ files in tabular format (see example_run_file for example). This script only execute the sample specified in the command argument. User must edit the script to specify the path to the SPAdes and the prodigal programs, memory limit, and the number of threads. The location that requres editing is commented with `#TODO` in the script.
+The main routine of the protocol. The script requires a file which contains the sample IDs and the ftp URLs for the FASTQ files in tabular format (see example_run_file for example). This script processes only the sample specified in the command argument. User must edit the script to specify the path to the SPAdes and the prodigal programs, memory limit, and the number of threads. The location that requres editing is commented with `#TODO` in the script.
 
 ### Example
 ```
